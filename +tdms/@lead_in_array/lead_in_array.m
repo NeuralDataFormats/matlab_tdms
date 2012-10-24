@@ -1,7 +1,6 @@
 classdef lead_in_array < handle
     %
     %
-    %
     %   METHODS
     %   ===============================
     %   tdms.lead_in_array.init_obj
@@ -20,6 +19,7 @@ classdef lead_in_array < handle
     properties
         n_segs
         data_start
+        data_length
         meta_start
         toc_mask
     end
