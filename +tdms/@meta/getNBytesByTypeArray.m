@@ -16,7 +16,7 @@ function nBytesByType = getNBytesByTypeArray(obj)
 %value.
 
 nBytesByType        = zeros(1,68);
-nBytesByType(1:10)  = [1:4 1:4 4 8];
+nBytesByType(1:10)  = [1 2 4 8 1 2 4 8 4 8];
 nBytesByType(25)    = 4;
 nBytesByType(26)    = 8;
 nBytesByType(33)    = 1;

@@ -45,6 +45,7 @@ if ~exist(filepath,'file')
    error('Specified file does not exist:\n%s\n',filepath) 
 end
 
+
 obj.fid = fopen(filepath,'r',obj.MACHINE_FORMAT,obj.STRING_ENCODING);
 
 

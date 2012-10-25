@@ -60,6 +60,8 @@ classdef meta < handle
            %
            %
            
+
+           
            %tmds.meta.open_file
            open_file(obj,filepath);
            

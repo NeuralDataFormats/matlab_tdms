@@ -20,19 +20,19 @@ fread_prop_info = props.get_prop_fread_functions;
 lead_in_obj       = lead_in_array(obj.fid,obj.reading_index_file);
 obj.lead_in       = lead_in_obj;
 
-li_has_raw_data   = lead_in_obj.has_raw_data;
-li_has_meta_data  = lead_in_obj.has_meta_data;
-li_new_obj_list   = lead_in_obj.new_obj_list;
+leadin_has_raw_data   = lead_in_obj.has_raw_data;
+leadin_has_meta_data  = lead_in_obj.has_meta_data;
+leadin_new_obj_list   = lead_in_obj.new_obj_list;
 
 %READ INSTRUCTIONS
 %=============================================
 
-raw_n_values_read  = zeros(1,INIT_READ_SIZE);
-raw_n_bytes_read   = zeros(1,INIT_READ_SIZE); %needed for strings - actually, maybe, might only need for getting starts ...
-raw_chan_id        = zeros(1,INIT_READ_SIZE);
+raw_n_values_read  = zeros(1,INIT_READ_SIZE); 
+raw_n_bytes_read   = zeros(1,INIT_READ_SIZE); %needed for strings 
+%- actually, maybe, might only need for getting starts ...
+raw_chan_id        = zeros(1,INIT_READ_SIZE); %
 raw_index_start    = zeros(1,lead_in_obj.n_segs);
 n_seg_reads = 0;            
-            
             
 %BY CHANNEL VARIABLES
 %==============================================
@@ -61,6 +61,132 @@ prop_vals       = cell(1,INIT_PROP_SIZE);
 prop_chan_ids   = zeros(1,INIT_PROP_SIZE);
 prop_is_timestamp  = false(1,INIT_PROP_SIZE);
 n_props_total   = 0;
+
+meta_data = obj.lead_in.meta_data;
+
+%THINGS TO SAVE IN THE LOOP
+%--------------------------------------
+%object
+%index length
+%
+
+for iSeg = 1:obj.lead_in.n_segs
+   cur_meta = meta_data{iSeg};
+   
+   %NOTE: It would be nice if I could make this prettier ...
+   %NOTE: I could do this in a loop - just get from a function 
+   
+   
+   n_1 = floor(0.25*length(cur_meta));
+   n_2 = floor(0.25*(length(cur_meta)-1));
+   n_3 = floor(0.25*(length(cur_meta)-2));
+   n_4 = floor(0.25*(length(cur_meta)-3));
+   
+   %m = zeros(n_1,4,'uint32');   %Or do I make this double?
+   
+   m = cell(1,4);
+   m{1} = typecast(cur_meta(1:4*n_1),'uint32');
+   m{2} = typecast(cur_meta(2:(4*n_2+1)),'uint32');
+   m{3} = typecast(cur_meta(3:(4*n_3+2)),'uint32');
+   m{4} = typecast(cur_meta(4:(4*n_4+3)),'uint32');
+   indices = zeros(1,n_1*4); %NOTE: use bsxfun or matrix multiplication
+   %indices = ones(4,1)*(1:(n_1/4));
+   %indices = repmat(1:(n_1/4),4,1);
+   %I can't believe this freaking works for speed :/
+   indices(1:4:end) = 1:n_1;
+   indices(2:4:end) = 1:n_1;
+   indices(3:4:end) = 1:n_1;
+   indices(4:4:end) = 1:n_1;
+   
+   %NOTE: Properties and strings are where we might change uint32 alignment
+   
+   n_objects = m{1}(1);
+
+   cur_index = 4;
+   word_align = 1;
+   for iObject = 1:n_objects
+      %object_name_byte_length = typecast(cur_meta((cur_index+1):(cur_index+4)),'uint32');
+      object_name_byte_length = m{word_align}(indices(cur_index+1));  
+      
+%       if object_name_byte_length ~= object_name_byte_length2
+%           keyboard
+%       end
+      
+      %object_name = local_native2unicode(cur_meta((cur_index+5):(cur_index+4+object_name_byte_length)))
+      
+      cur_index = cur_index + 4 + object_name_byte_length;
+      
+      word_align = mod(cur_index,4)+1;
+      
+      %NOTE: I skipped reading the objects name here, come back to this later
+      
+      %index_length   = typecast(cur_meta((cur_index+1):(cur_index+4)),'uint32');
+     index_length   = m{word_align}(indices(cur_index+1));
+      
+%       if index_length ~= index_length2
+%           keyboard
+%       end
+      
+      if index_length ~= MAX_INT
+          cur_index = cur_index + index_length;
+      else
+          cur_index = cur_index + 4;
+      end
+      
+      word_align = mod(cur_index,4)+1;
+      
+      %NOTE: It looks like there is no way to skip the damn properties ...
+     % n_properties = typecast(cur_meta((cur_index+1):(cur_index+4)),'uint32');
+      
+      n_properties   = m{word_align}(indices(cur_index+1));
+      
+%       if n_properties ~= n_properties2
+%           keyboard
+%       end
+      
+      cur_index = cur_index + 4;
+      for iProp = 1:n_properties
+%           prop_name_byte_length = typecast(cur_meta((cur_index+1):(cur_index+4)),'uint32');
+          prop_name_byte_length = m{word_align}(indices(cur_index+1));
+          
+%           if prop_name_byte_length ~= prop_name_byte_length2
+%               
+%               keyboard
+%           end
+          
+          %prop_name = local_native2unicode(cur_meta((cur_index+5):(cur_index+4+prop_name_byte_length)))
+          
+          cur_index = cur_index + 4 + prop_name_byte_length;
+          
+          %NOTE: I might be able to type convert less here ...
+          
+          word_align = mod(cur_index,4)+1;
+          
+%           prop_type = typecast(cur_meta((cur_index+1):(cur_index+4)),'uint32');
+          prop_type = m{word_align}(indices(cur_index+1));
+%           if prop_type ~= prop_type2
+%               keyboard
+%           end
+          
+          if prop_type == 32
+              prop_string_length = typecast(cur_meta((cur_index+5):(cur_index+8)),'uint32');
+              cur_index = cur_index + 8 + prop_string_length;
+          else
+              cur_index = cur_index + 4 + n_bytes_by_type(prop_type);
+          end
+          
+          word_align = mod(cur_index,4)+1;
+      end
+   end
+   
+end
+
+return
+
+
+
+
+
 
 
 
@@ -131,10 +257,10 @@ for iSeg = 1:lead_in_obj.n_segs
    
    %META PROCESSING
    %=======================================================================
-   if li_has_meta_data(iSeg)
+   if leadin_has_meta_data(iSeg)
       number_new_objs_in_segment = fread(fid,1,'uint32');
       
-      if li_new_obj_list(iSeg)
+      if leadin_new_obj_list(iSeg)
          obj_index_in_cr(cr_obj_order(1:cr_n_objs)) = 0;
          cr_n_objs = 0; 
       end
@@ -238,7 +364,7 @@ for iSeg = 1:lead_in_obj.n_segs
    
     %NOTE: I don't currently hold onto the data type
     %Assume it doesn't change ... - reference back to obj
-    if li_has_raw_data(iSeg) && byte_size_raw(iSeg) ~= 0
+    if leadin_has_raw_data(iSeg) && byte_size_raw(iSeg) ~= 0
         %NOTE: apparently it is valid to say raw data is present
         %even if there is none present ...
         indices                     = n_seg_reads+1:n_seg_reads+cr_n_objs;

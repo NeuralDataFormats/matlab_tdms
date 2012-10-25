@@ -10,6 +10,11 @@ function [lead_in_array,lengths] = readLeadIn(obj,fid,first_word)
 %seg_length     - 2 words
 %meta_length    - 2 words
 
+%NOTE: Trying not to use this function
+%Newer code:
+%   readLeadInFromIndexFile
+
+
 lead_in_array = fread(fid,3,'*uint32');
 lengths       = fread(fid,2,'uint64');
 

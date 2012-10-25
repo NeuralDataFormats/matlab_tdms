@@ -4,6 +4,9 @@ classdef lead_in_array < handle
     %   METHODS
     %   ===============================
     %   tdms.lead_in_array.init_obj
+    %
+    %
+
     
     properties (Dependent)
         %FLAGS
@@ -18,10 +21,11 @@ classdef lead_in_array < handle
     
     properties
         n_segs
-        data_start
-        data_length
-        meta_start
-        toc_mask
+        data_starts     %byte index in file where data reading starts
+        data_lengths    %byte lengths of all segments
+        meta_starts     %byte index in index or data file where meta starts
+        toc_masks       %instructions for each segment
+        meta_data       %cell array of meta data for all segments
     end
     
     properties (Constant)
@@ -30,27 +34,27 @@ classdef lead_in_array < handle
     
     methods
         function value = get.has_meta_data(obj)
-            value = bitget(obj.toc_mask,2);
+            value = bitget(obj.toc_masks,2);
         end
         
         function value = get.new_obj_list(obj)
-            value = bitget(obj.toc_mask,3);
+            value = bitget(obj.toc_masks,3);
         end
         
         function value = get.has_raw_data(obj)
-            value = bitget(obj.toc_mask,4);
+            value = bitget(obj.toc_masks,4);
         end
         
         function value = get.is_interleaved(obj)
-            value = bitget(obj.toc_mask,6);
+            value = bitget(obj.toc_masks,6);
         end
         
         function value = get.is_big_endian(obj)
-            value = bitget(obj.toc_mask,7);
+            value = bitget(obj.toc_masks,7);
         end
         
         function value = get.has_raw_daqmx(obj)
-            value = bitget(obj.toc_mask,8);
+            value = bitget(obj.toc_masks,8);
         end
     end
     
