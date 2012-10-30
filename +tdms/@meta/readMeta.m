@@ -3,389 +3,128 @@ function readMeta(obj)
 %
 %   NAME: tdms.meta.readMeta
 
-import tdms.*
 
-MAX_INT        = 2^32-1;
-INIT_OBJ_SIZE  = 1000;
-INIT_PROP_SIZE = 1000;
-INIT_READ_SIZE = 100000;
 
-fid = obj.fid;
-
-n_bytes_by_type = getNBytesByTypeArray(obj);
-fread_prop_info = props.get_prop_fread_functions;
+%fid = obj.fid;
 
 
 
-lead_in_obj       = lead_in_array(obj.fid,obj.reading_index_file);
-obj.lead_in       = lead_in_obj;
+obj.lead_in = tdms.lead_in_array(obj.fid,obj.reading_index_file);
 
-leadin_has_raw_data   = lead_in_obj.has_raw_data;
-leadin_has_meta_data  = lead_in_obj.has_meta_data;
-leadin_new_obj_list   = lead_in_obj.new_obj_list;
+extractMetaInfo(obj) %Populates raw meta
 
-%READ INSTRUCTIONS
-%=============================================
+raw_meta_obj  = obj.raw_meta;
 
-raw_n_values_read  = zeros(1,INIT_READ_SIZE);
-raw_n_bytes_read   = zeros(1,INIT_READ_SIZE); %needed for strings
-%- actually, maybe, might only need for getting starts ...
-raw_chan_id        = zeros(1,INIT_READ_SIZE); %
-raw_index_start    = zeros(1,lead_in_obj.n_segs);
-n_seg_reads = 0;
+%NOTE: Step 1 is finished, now onto step 2
+%=========================================================================
+%STEP 2, CLEANUP & VERIFICATION
 
-%BY CHANNEL VARIABLES
-%==============================================
+[u_obj_names,u_obj_names__indices,final_id] = unique2(raw_meta_obj.obj_names);
+n_unique_objs = length(u_obj_names);
 
-obj_index_in_cr      = zeros(1,INIT_OBJ_SIZE); %check this for appendings
-obj_n_vals_per_read  = zeros(1,INIT_OBJ_SIZE);
-obj_n_bytes_per_read = zeros(1,INIT_OBJ_SIZE); %for strings ...
-obj_data_type        = zeros(1,INIT_OBJ_SIZE);
-obj_names            = cell(1,INIT_OBJ_SIZE);
-n_objs               = 0;
+getObjProps(obj,final_id,n_unique_objs);
 
+getNPerRead(obj,final_id,n_unique_objs)
 
-%BY CUR READ VARIABLES
-%==============================================
-cr_obj_order        = zeros(1,INIT_OBJ_SIZE); %NOTE: this isn't by object
-cr_n_bytes_per_read = zeros(1,INIT_OBJ_SIZE);
-cr_n_vals_per_read  = zeros(1,INIT_OBJ_SIZE);
-cr_n_objs     = 0;
+new_obj_list = obj.lead_in.new_obj_list;
 
+%NEXT PART
+%======================================================
+I_new_obj_start_seg  = find(new_obj_list);
+I_new_obj_end_seg_p1 = [I_new_obj_start_seg(2:end); obj.lead_in.n_segs+1];
+I_new_obj_end_seg    = I_new_obj_end_seg_p1 - 1;
 
+%NOTE: BIN_I will now define the ending segment
+[~,BIN_I] = histc(obj.raw_meta.obj_seg,[I_new_obj_start_seg; obj.lead_in.n_segs+1]);
 
-%PROPERTY HANDLING
-%===============================================
-prop_names      = cell(1,INIT_PROP_SIZE);
-prop_vals       = cell(1,INIT_PROP_SIZE);
-prop_chan_ids   = zeros(1,INIT_PROP_SIZE);
-prop_is_timestamp  = false(1,INIT_PROP_SIZE);
-n_props_total   = 0;
+obj_seg = obj.raw_meta.obj_seg;
 
-meta_data = obj.lead_in.meta_data;
+%NOTE: If there is a new object list for every read, then all of this
+%should be 1 to 1 and can probably be skipped
 
-%THINGS TO SAVE IN THE LOOP
-%--------------------------------------
-%object
-%index length
-%
+%TODO: Fix this ...
+BLAH = 10*length(BIN_I);
+raw_obj_linear = zeros(1,BLAH);
+seg_linear     = zeros(1,BLAH);
 
-for iSeg = 1:obj.lead_in.n_segs
-    cur_uint8_seg_meta_data = meta_data{iSeg};
-    cur_uint32_seg_data     = get_uint32_data(cur_uint8_seg_meta_data);
-    
-    n_objects = cur_uint32_seg_data(1,1);
-    
-    
-    %THINGS TO GET OUT OF THE LOOP
-    %====================================================
-    %1) segment
-    %2) object name
-    %3) index length
-    %4) 
-    
-    %LOOPS
-    %1) - segment loop
-    %2) - object loop
-    %3) - properties loop
-    
-    
-    
-    
-    cur_index = 4;
-    for iObject = 1:n_objects
-        object_name_byte_length = cur_uint32_seg_data(cur_index+1);
-        %object_name = local_native2unicode(cur_meta((cur_index+5):(cur_index+4+object_name_byte_length)))
+obj_has_raw_data = obj.raw_meta.obj_has_raw_data;
+
+%In this loop we go from objects which may come in at a given segment
+%and then persist for multiple segments until a new list is present,
+%to explicit specification that these objects exist for every segment that
+%they exist.
+%i.e. you might have
+%seg #      1  2  3  4
+%obj 1         y
+%new list            y
+%In this case object 1 exists for segments 2 & 3.
+
+%NOTE: We also need to check that a new definition of the object
+%doesn't coexist with an old definition of the object 
+
+cur_index = 0;
+for iObj = 1:length(BIN_I)
+    %NOTE: Would be nice to get rid of this if
+    if obj_has_raw_data(iObj)
         
-        cur_index    = cur_index + 4 + object_name_byte_length;
-        
-        index_length = cur_uint32_seg_data(cur_index+1);
-        
-        if index_length ~= MAX_INT
-            cur_index = cur_index + index_length;
-        else
-            cur_index = cur_index + 4;
-        end
-        
-        %NOTE: It looks like there is no way to skip the damn properties ...
-        n_properties   = cur_uint32_seg_data(cur_index+1);
+        %NOTE: This could all be vectorized ...
+        start_seg      = obj_seg(iObj);
+        end_seg        = I_new_obj_end_seg(BIN_I(iObj));
+        n_segs_for_obj = end_seg-start_seg + 1;
         
         
-        cur_index = cur_index + 4;
-        for iProp = 1:n_properties
-            prop_name_byte_length = cur_uint32_seg_data(cur_index+1);
-            
-            %prop_name = local_native2unicode(cur_meta((cur_index+5):(cur_index+4+prop_name_byte_length)))
-            
-            cur_index = cur_index + 4 + prop_name_byte_length;
-            
-            %NOTE: I might be able to type convert less here ...
-            
-            prop_type = cur_uint32_seg_data(cur_index+1);
-            
-            if prop_type == 32
-                prop_string_length = typecast(cur_uint8_seg_meta_data((cur_index+5):(cur_index+8)),'uint32');
-                cur_index = cur_index + 8 + prop_string_length;
-            else
-                cur_index = cur_index + 4 + n_bytes_by_type(prop_type);
-            end
-            
-        end
+        %Which means this could probably be vectorized
+        %use cumsum
+        %TODO: Check for overflow here ...
+        
+        raw_obj_linear(cur_index+1:cur_index+n_segs_for_obj) = iObj;
+        seg_linear(cur_index+1:cur_index+n_segs_for_obj)     = start_seg:end_seg;
+        cur_index = cur_index + n_segs_for_obj;
     end
-    
 end
+
+raw_obj_linear = raw_obj_linear(1:cur_index);
+seg_linear     = seg_linear(1:cur_index);
+
+%Now we need to get instructions
+%===================================================
+%n bytes per segment
+
+%A = accumarray(SUBS,VAL);
+n_bytes_per_read_per_segment = accumarray(seg_linear',...
+    obj.n_bytes_per_read(raw_obj_linear),[obj.lead_in.n_segs 1]);
+
+n_reps_per_segment = n_bytes_per_read_per_segment./obj.lead_in.data_lengths;
+
+if any(abs(n_reps_per_segment - round(n_reps_per_segment)) > 0.00001)
+    %TODO: Provide more detail in error code
+    error('Integer reading expected')
+end
+
+%What do we need now
+%1 = for each segment, which channels are present
+%represent as, start, stop in linearized array?
+%NOTE: Might need to sort linearized array
+%seg,obj => sort rows
+
 
 return
 
 
-
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % % meta_starts = lead_in_obj.meta_start;
-% % % % % % % % % %
-% % % % % % % % % % %WRONG
-% % % % % % % % % % byte_size_raw = lead_in_obj.data_length;
-% % % % % % % % % %
-% % % % % % % % % % %Could I do channel reads here and reduce
-% % % % % % % % % % %strcmp later ???
-% % % % % % % % % % %Does unique2 work on strings?
-% % % % % % % % % % %
-% % % % % % % % % % %Can I know the # of reads ahead of time ...
-% % % % % % % % % % %based on this ...
-% % % % % % % % % % %NOTE: I think I should be able to
-% % % % % % % % % % %
-% % % % % % % % % % %- note, for unique 2, creating an original
-% % % % % % % % % % %index you init to full size and then assign
-% % % % % % % % % % %each
-% % % % % % % % % % %unique_index_all(uI(incrementer)) = incrementor;
-% % % % % % % % % % %
-% % % % % % % % % % %NOTE: this approach might be a lot faster
-% % % % % % % % % % %since strcmp compares against all strings
-% % % % % % % % % % %before then finding 1 match :/ => silly Matlab
-% % % % % % % % % % % for iSeg = 1:lead_in_obj.n_segs
-% % % % % % % % % % %    %get all channel specs
-% % % % % % % % % % % end
-% % % % % % % % % %
-% % % % % % % % % % %For a real perverse optimization, I could
-% % % % % % % % % % %read as uint32, shifted 4x, and then do a mod on the seek
-% % % % % % % % % % %position to know which of these shifts to use
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % % %============================
-% % % % % % % % % % %JAH: move into second version for index only
-% % % % % % % % % % %===============================
-% % % % % % % % % %
-% % % % % % % % % % % % % fseek(fid,0,-1);
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % %7363
-% % % % % % % % % % % % % %7356
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % uint8_all = fread(fid,Inf,'*uint8');
-% % % % % % % % % % % % % end_use = floor(0.25*(length(uint8_all)-3))*4;
-% % % % % % % % % % % % % uint32_all = [typecast(uint8_all(1:end_use),'uint32')';...
-% % % % % % % % % % % % %               typecast(uint8_all(2:end_use+1),'uint32')';...
-% % % % % % % % % % % % %               typecast(uint8_all(3:end_use+2),'uint32')';...
-% % % % % % % % % % % % %               typecast(uint8_all(4:end_use+3),'uint32')';];
-% % % % % % % % % % % % %
-% % % % % % % % % % % % % uint32_all = uint32_all(:)';
-% % % % % % % % % % % % %
-% % % % % % % % % % %n_objs_in_segment = uint32_all(meta_starts+1)
-% % % % % % % % % %
-% % % % % % % % % % %NOTE: At this point we now know how to initialize the
-% % % % % % % % % % %reading of the strings - how many we'll have
-% % % % % % % % % % %
-% % % % % % % % % % %?? - how to skip btwn strings ???
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % % for iSeg = 1:lead_in_obj.n_segs
-% % % % % % % % % %
-% % % % % % % % % %    %OUTLINE
-% % % % % % % % % %    %-----------------------
-% % % % % % % % % %    %- new obj list
-% % % % % % % % % %    %- num new segments
-% % % % % % % % % %
-% % % % % % % % % %    fseek(fid,meta_starts(iSeg),-1);
-% % % % % % % % % %
-% % % % % % % % % %    %META PROCESSING
-% % % % % % % % % %    %=======================================================================
-% % % % % % % % % %    if leadin_has_meta_data(iSeg)
-% % % % % % % % % %       number_new_objs_in_segment = fread(fid,1,'uint32');
-% % % % % % % % % %
-% % % % % % % % % %       if leadin_new_obj_list(iSeg)
-% % % % % % % % % %          obj_index_in_cr(cr_obj_order(1:cr_n_objs)) = 0;
-% % % % % % % % % %          cr_n_objs = 0;
-% % % % % % % % % %       end
-% % % % % % % % % %
-% % % % % % % % % %       %Loop over objects with new props or raw info reading instructions
-% % % % % % % % % %       %----------------------------------------
-% % % % % % % % % %       for iObj = 1:number_new_objs_in_segment
-% % % % % % % % % %             %1) GET OBJECT PATH
-% % % % % % % % % %             %----------------------------------------
-% % % % % % % % % %             %Ideally we could keep as uint8 and do char only at the end
-% % % % % % % % % %             cur_obj_name = fread(fid,fread(fid,1,'uint32'),'uint8=>char')';
-% % % % % % % % % %
-% % % % % % % % % %             %2) GETTING OBJECT INDEX
-% % % % % % % % % %             %----------------------------------------
-% % % % % % % % % %             obj_index = find(strcmp(obj_names(1:n_objs),cur_obj_name),1);
-% % % % % % % % % %             if isempty(obj_index)
-% % % % % % % % % %                 obj_index = n_objs + 1;
-% % % % % % % % % %                 %TODO: Implement resize code if necessary ...
-% % % % % % % % % %                 n_objs    = obj_index;
-% % % % % % % % % %                 obj_names{obj_index} = cur_obj_name;
-% % % % % % % % % %             end
-% % % % % % % % % %
-% % % % % % % % % %             %3) RAW DATA INFO
-% % % % % % % % % %             %-------------------------------------------
-% % % % % % % % % %             %NOTE: Would be really nice to have this be a function
-% % % % % % % % % %             %INPUTS
-% % % % % % % % % %             %- fid
-% % % % % % % % % %             %OUTPUTS
-% % % % % % % % % %             %- raw_data_index_length - not even sure what this is ...
-% % % % % % % % % %             %
-% % % % % % % % % %             %
-% % % % % % % % % %             %
-% % % % % % % % % %             %- data_type
-% % % % % % % % % %             %
-% % % % % % % % % %             %------------------
-% % % % % % % % % %             %- cr_index
-% % % % % % % % % %             %- cr_n_objs
-% % % % % % % % % %             %- obj_index_in_cr
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % %             cr_index = obj_index_in_cr(obj_index);
-% % % % % % % % % %
-% % % % % % % % % %             raw_data_index_length = fread(fid,1,'uint32');
-% % % % % % % % % %             switch raw_data_index_length
-% % % % % % % % % %                 case 0
-% % % % % % % % % %                     %Same as last raw data specification
-% % % % % % % % % %                     if cr_index == 0
-% % % % % % % % % %                        cr_n_objs = cr_n_objs + 1;
-% % % % % % % % % %                        cr_index  = cr_n_objs;
-% % % % % % % % % %                        obj_index_in_cr(obj_index) = cr_index;
-% % % % % % % % % %                     end
-% % % % % % % % % %                 case MAX_INT
-% % % % % % % % % %                     %No raw data, if present in list, need to delete ...
-% % % % % % % % % %                     if obj_index_in_cr(obj_index)
-% % % % % % % % % %                         error('List removal not yet implemented')
-% % % % % % % % % %                     end
-% % % % % % % % % %                 otherwise
-% % % % % % % % % %                     data_type_temp  = fread(fid,1,'uint32');
-% % % % % % % % % %
-% % % % % % % % % %                     if fread(fid,1,'uint32') ~= 1, error('1D array assumed'), end
-% % % % % % % % % %
-% % % % % % % % % %                     obj_n_vals_per_read(obj_index) = fread(fid,1,'uint64');
-% % % % % % % % % %
-% % % % % % % % % %                     %Better as a function?
-% % % % % % % % % %                     if data_type_temp == 32
-% % % % % % % % % %                         obj_n_bytes_per_read(obj_index) = fread(fid,1,'uint64');
-% % % % % % % % % %                     else
-% % % % % % % % % %                         obj_n_bytes_per_read(obj_index) = n_bytes_by_type(data_type_temp)*obj_n_vals_per_read(obj_index);
-% % % % % % % % % %                     end
-% % % % % % % % % %                     obj_data_type(obj_index) = data_type_temp;
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % %                     if cr_index == 0
-% % % % % % % % % %                        cr_n_objs = cr_n_objs + 1;
-% % % % % % % % % %                        cr_index  = cr_n_objs;
-% % % % % % % % % %                        obj_index_in_cr(obj_index) = cr_index;
-% % % % % % % % % %                     end
-% % % % % % % % % %
-% % % % % % % % % %             end
-% % % % % % % % % %
-% % % % % % % % % %             %Adding channel onto current read list
-% % % % % % % % % %             if cr_index ~= 0
-% % % % % % % % % %                 cr_obj_order(cr_n_objs)        = obj_index;
-% % % % % % % % % %                 cr_n_bytes_per_read(cr_n_objs) = obj_n_bytes_per_read(obj_index);
-% % % % % % % % % %                 cr_n_vals_per_read(cr_n_objs)  = obj_n_vals_per_read(obj_index);
-% % % % % % % % % %             end
-% % % % % % % % % %
-% % % % % % % % % %             %Property Reading
-% % % % % % % % % %             %-----------------------------------------------------
-% % % % % % % % % %             for iProp = 1:fread(fid,1,'uint32')
-% % % % % % % % % %                n_props_total = n_props_total + 1;
-% % % % % % % % % %                prop_names{n_props_total}     = fread(fid,fread(fid,1,'uint32'),'uint8=>char')';
-% % % % % % % % % %                [prop_vals{n_props_total},prop_is_timestamp(n_props_total)] = ...
-% % % % % % % % % %                    feval(fread_prop_info{fread(fid,1,'uint32')},fid);
-% % % % % % % % % %                prop_chan_ids(n_props_total)  = obj_index;
-% % % % % % % % % %             end
-% % % % % % % % % %
-% % % % % % % % % %       end
-% % % % % % % % % %    end
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % %     %NOTE: I don't currently hold onto the data type
-% % % % % % % % % %     %Assume it doesn't change ... - reference back to obj
-% % % % % % % % % %     if leadin_has_raw_data(iSeg) && byte_size_raw(iSeg) ~= 0
-% % % % % % % % % %         %NOTE: apparently it is valid to say raw data is present
-% % % % % % % % % %         %even if there is none present ...
-% % % % % % % % % %         indices                     = n_seg_reads+1:n_seg_reads+cr_n_objs;
-% % % % % % % % % %         raw_n_bytes_read(indices)   = cr_n_bytes_per_read(1:cr_n_objs);
-% % % % % % % % % %         raw_n_values_read(indices)  = cr_n_vals_per_read(1:cr_n_objs);
-% % % % % % % % % %         raw_chan_id(indices)        = cr_obj_order(1:cr_n_objs);
-% % % % % % % % % %         raw_index_start(iSeg)       = n_seg_reads+1;
-% % % % % % % % % %         n_seg_reads                 = n_seg_reads + cr_n_objs;
-% % % % % % % % % %     end
-% % % % % % % % % %
-% % % % % % % % % % end
-% % % % % % % % % %
-% % % % % % % % % % raw_data_type = obj_data_type(raw_chan_id(1:n_seg_reads));
-% % % % % % % % % %
-% % % % % % % % % % %Need to handle this better ...
-% % % % % % % % % % %prop_vals(prop_is_timestamp(1:n_props_total)) = ...
-% % % % % % % % % % %    cellfun(@to_timestamp,prop_vals(prop_is_timestamp(1:n_props_total)));
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % % %raw_n_bytes_read(
-% % % % % % % % % %
-% % % % % % % % % % obj.raw_n_bytes_read    = raw_n_bytes_read;
-% % % % % % % % % % obj.raw_n_values_read   = raw_n_values_read;
-% % % % % % % % % % obj.raw_index_start     = raw_index_start;
-% % % % % % % % % % obj.raw_chan_id         = raw_chan_id;
-% % % % % % % % % % obj.raw_data_type       = raw_data_type;
-% % % % % % % % % % obj.n_seg_reads         = n_seg_reads;
-% % % % % % % % % %
-% % % % % % % % % % obj.props = props(...
-% % % % % % % % % %     prop_names(1:n_props_total),...
-% % % % % % % % % %     prop_vals(1:n_props_total),...
-% % % % % % % % % %     prop_chan_ids(1:n_props_total),...
-% % % % % % % % % %     n_objs);%call constructor
-% % % % % % % % % %
-% % % % % % % % % % fclose(fid);
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % % %start nSamples channel_or_GroupId interleaved
-% % % % % % % % % %
-% % % % % % % % % %
-% % % % % % % % % % %NOTE: Move this into a different section
-% % % % % % % % % % %RAW DATA
-% % % % % % % % % % %---------------------------
-% % % % % % % % % % %INPUTS
-% % % % % % % % % % %byteSizeRaw
+FINAL_READ_SPECS_SIZE = 2*obj.lead_in.n_segs;
+read__id          = zeros(1,FINAL_READ_SPECS_SIZE);
+read__byte_start  = zeros(1,FINAL_READ_SPECS_SIZE);
+read__n_values    = zeros(1,FINAL_READ_SPECS_SIZE);
+read__n_bytes     = zeros(1,FINAL_READ_SPECS_SIZE);
+cur_read_index    = 0;
 
 
 end
 
-function cur_uint32_seg_data = get_uint32_data(cur_seg_meta_data)
-n_1 = floor(0.25*length(cur_seg_meta_data));
-n_2 = floor(0.25*(length(cur_seg_meta_data)-1));
-n_3 = floor(0.25*(length(cur_seg_meta_data)-2));
-n_4 = floor(0.25*(length(cur_seg_meta_data)-3));
-
-cur_uint32_seg_data = zeros(4,n_1);   %Or do I make this double?
-
-cur_uint32_seg_data(1,1:n_1) = double(typecast(cur_seg_meta_data(1:4*n_1),'uint32'));
-cur_uint32_seg_data(2,1:n_2) = double(typecast(cur_seg_meta_data(2:(4*n_2+1)),'uint32'));
-cur_uint32_seg_data(3,1:n_3) = double(typecast(cur_seg_meta_data(3:(4*n_3+2)),'uint32'));
-cur_uint32_seg_data(4,1:n_4) = double(typecast(cur_seg_meta_data(4:(4*n_4+3)),'uint32'));
-%NOTE: By going down rows for different shifts, indices
-%will direcetly index into m
-end
 
 
+%NOTE: This will eventually be needed ...
+%Need to fix objects & props
 function str_out = local_native2unicode(uint8_in)
 STR_ENCODING = 'UTF-8';
 str_out = native2unicode(uint8_in,STR_ENCODING);

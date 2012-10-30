@@ -11,6 +11,11 @@ function readLeadInFromIndexFile(obj,fid,first_word)
 %   2) Need to handle unclosed files
 %   3) Move to using input options
 %   4) change 28 to variable name
+%
+%   ASSUMPTIONS
+%   =========================================
+%   Double works fine for index, instead of uint64
+%       TODO: Add check for double overflow
 
 INIT_SIZE   = 10000;
 GROWTH_SIZE = 10000;
@@ -21,16 +26,14 @@ eofPosition = length(str);
 
 %New Approach: Assume everything is good, then 
 %check afterwards whether or not it is ...
-curIndex = uint64(0);
+curIndex = 1;
 
 %NOTE: For typecasting we must have data grow in columns
 %or transpose later ...
 lead_in_data = zeros(28,INIT_SIZE,'uint8');
 nsegs = 0;
 
-%NOTE: This must be <, not <= we should
-%end with these being equal, and it shouldn't run in that case
-while curIndex < eofPosition
+while curIndex <= eofPosition
    nsegs = nsegs + 1;
    
    if nsegs > size(lead_in_data,2)
@@ -40,9 +43,10 @@ while curIndex < eofPosition
    %TODO: If this ever goes wrong we need to go back and retroactively 
    %check the lead in flags ...
    
-   lead_in_data(:,nsegs) = str(curIndex+1:curIndex+28);
-   meta_length = typecast(str(curIndex+21:curIndex+28),'uint64');
-   curIndex    = curIndex + meta_length + 28; %Lead in size
+   lead_in_data(:,nsegs) = str(curIndex:curIndex+27);
+   curIndex    = curIndex + 20;
+   meta_length = double(typecast(str(curIndex:curIndex+7),'uint64'));
+   curIndex    = curIndex + meta_length + 8; %Lead in size
     
 end
 

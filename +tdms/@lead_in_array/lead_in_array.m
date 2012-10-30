@@ -24,8 +24,11 @@ classdef lead_in_array < handle
         data_starts     %byte index in file where data reading starts
         data_lengths    %byte lengths of all segments
         meta_starts     %byte index in index or data file where meta starts
-        toc_masks       %instructions for each segment
         meta_data       %cell array of meta data for all segments
+    end
+    
+    properties (Hidden)
+        toc_masks       %instructions for each segment
     end
     
     properties (Constant)

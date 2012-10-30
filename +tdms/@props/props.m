@@ -7,7 +7,8 @@ classdef props < handle
     end
     
     methods (Static)
-       fread_prop_info = get_prop_fread_functions 
+       fread_prop_info = get_prop_fread_functions
+       fread_prop_info = get_prop_fread_functions2
     end
     
     methods

@@ -27,13 +27,19 @@ classdef meta < handle
         %indicates that the filename passed in was the index file
         reading_index_file = true
         
-        n_objs = 0
+        n_objs    = 0
         obj_names = {}
         n_objs_allocated = 0
         
-        %Data to hold onto for each object ...
-        %---------------------------------------------------
         props
+            %.names
+            %.values
+        
+        
+        raw_meta %Class tdms.raw_meta
+        
+        n_bytes_per_read
+        n_values_per_read
         
         %-----------------------------------------------
         raw_n_bytes_read
@@ -71,8 +77,9 @@ classdef meta < handle
            %NOTE: It would be nice to hide this from the programmer
            %obj.lead_in = tdms.lead_in(obj.reading_index_file); 
         end
-        
-      
+    end
+    methods (Static)
+       %obj_props = getObjProps(orig_obj_final_id,prop_chan_ids,prop_names,prop_values,n_unique_objs) 
     end
     
 end
