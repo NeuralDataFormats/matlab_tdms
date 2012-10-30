@@ -3,21 +3,17 @@ function readMeta(obj)
 %
 %   NAME: tdms.meta.readMeta
 
+%Read the lead in information 
+%-----------------------------------------------
+%TODO: Rename to lead_in once other class has been cleared
+obj.lead_in = tdms.lead_in_array(obj);
 
-
-%fid = obj.fid;
-
-
-
-obj.lead_in = tdms.lead_in_array(obj.fid,obj.reading_index_file);
-
+%TODO: Move method to constructor ...
 extractMetaInfo(obj) %Populates raw meta
 
 raw_meta_obj  = obj.raw_meta;
 
-%NOTE: Step 1 is finished, now onto step 2
-%=========================================================================
-%STEP 2, CLEANUP & VERIFICATION
+
 
 [u_obj_names,u_obj_names__indices,final_id] = unique2(raw_meta_obj.obj_names);
 n_unique_objs = length(u_obj_names);
@@ -43,7 +39,7 @@ obj_seg = obj.raw_meta.obj_seg;
 %should be 1 to 1 and can probably be skipped
 
 %TODO: Fix this ...
-BLAH = 10*length(BIN_I);
+BLAH = 20*length(BIN_I);
 raw_obj_linear = zeros(1,BLAH);
 seg_linear     = zeros(1,BLAH);
 
