@@ -17,7 +17,10 @@ classdef raw_meta
         %   0       - same as last segment (WITH DATA)
         %   MAX_INT - no data
         
-        raw_obj__has_raw_data
+        %Dependent variables (not made dependent)
+        raw_obj__has_raw_data 
+        n_raw_objs
+        
         
         %NOTE: These are somewhat incorrect as we haven't taken into
         %account the "same as before" status when obj_len = 0
