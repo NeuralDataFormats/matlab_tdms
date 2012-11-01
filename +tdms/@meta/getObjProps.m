@@ -16,8 +16,8 @@ function getObjProps(obj,orig_obj_final_id,n_unique_objs)
 
 
 prop_chan_ids = obj.raw_meta.prop__raw_obj_id;
-prop_names    = obj.raw_meta.prop_names;
-prop_values   = obj.raw_meta.prop_values;
+prop_names    = obj.raw_meta.prop__names;
+prop_values   = obj.raw_meta.prop__values;
 
 nProps = length(prop_chan_ids);
 

@@ -3,6 +3,7 @@ function readMeta(obj)
 %
 %   NAME: tdms.meta.readMeta
 
+
 %Read the lead in information 
 %-----------------------------------------------
 %TODO: Rename to lead_in once other class has been cleared
@@ -15,72 +16,20 @@ raw_meta_obj  = obj.raw_meta;
 
 
 
-[u_obj_names,u_obj_names__indices,final_id] = unique2(raw_meta_obj.obj_names);
-n_unique_objs = length(u_obj_names);
+obj.fixed_meta = tdms.meta.fixed(obj);
 
-getObjProps(obj,final_id,n_unique_objs);
 
-getNPerRead(obj,final_id,n_unique_objs)
 
-new_obj_list = obj.lead_in.new_obj_list;
+%Property Population --------------------------------------------------
+getObjProps(obj,final_obj_id,n_unique_objs);
 
-%NEXT PART
-%======================================================
-I_new_obj_start_seg  = find(new_obj_list);
-I_new_obj_end_seg_p1 = [I_new_obj_start_seg(2:end); obj.lead_in.n_segs+1];
-I_new_obj_end_seg    = I_new_obj_end_seg_p1 - 1;
 
-%NOTE: BIN_I will now define the ending segment
-[~,BIN_I] = histc(obj.raw_meta.obj_seg,[I_new_obj_start_seg; obj.lead_in.n_segs+1]);
 
-obj_seg = obj.raw_meta.obj_seg;
 
-%NOTE: If there is a new object list for every read, then all of this
-%should be 1 to 1 and can probably be skipped
+[seg_linear,raw_obj_linear] = getDataReadOrderEachSegment(obj,final_obj_id__sorted,I_obj_orig);
 
-%TODO: Fix this ...
-BLAH = 20*length(BIN_I);
-raw_obj_linear = zeros(1,BLAH);
-seg_linear     = zeros(1,BLAH);
 
-obj_has_raw_data = obj.raw_meta.obj_has_raw_data;
-
-%In this loop we go from objects which may come in at a given segment
-%and then persist for multiple segments until a new list is present,
-%to explicit specification that these objects exist for every segment that
-%they exist.
-%i.e. you might have
-%seg #      1  2  3  4
-%obj 1         y
-%new list            y
-%In this case object 1 exists for segments 2 & 3.
-
-%NOTE: We also need to check that a new definition of the object
-%doesn't coexist with an old definition of the object 
-
-cur_index = 0;
-for iObj = 1:length(BIN_I)
-    %NOTE: Would be nice to get rid of this if
-    if obj_has_raw_data(iObj)
-        
-        %NOTE: This could all be vectorized ...
-        start_seg      = obj_seg(iObj);
-        end_seg        = I_new_obj_end_seg(BIN_I(iObj));
-        n_segs_for_obj = end_seg-start_seg + 1;
-        
-        
-        %Which means this could probably be vectorized
-        %use cumsum
-        %TODO: Check for overflow here ...
-        
-        raw_obj_linear(cur_index+1:cur_index+n_segs_for_obj) = iObj;
-        seg_linear(cur_index+1:cur_index+n_segs_for_obj)     = start_seg:end_seg;
-        cur_index = cur_index + n_segs_for_obj;
-    end
-end
-
-raw_obj_linear = raw_obj_linear(1:cur_index);
-seg_linear     = seg_linear(1:cur_index);
+%n_values_linear = obj.n_values_per_read(raw_obj_linear);
 
 %Now we need to get instructions
 %===================================================
@@ -90,8 +39,9 @@ seg_linear     = seg_linear(1:cur_index);
 n_bytes_per_read_per_segment = accumarray(seg_linear',...
     obj.n_bytes_per_read(raw_obj_linear),[obj.lead_in.n_segs 1]);
 
-n_reps_per_segment = n_bytes_per_read_per_segment./obj.lead_in.data_lengths;
+n_reps_per_segment = obj.lead_in.data_lengths./n_bytes_per_read_per_segment;
 
+%TODO: Make 0.0001 a CONST ABOVE
 if any(abs(n_reps_per_segment - round(n_reps_per_segment)) > 0.00001)
     %TODO: Provide more detail in error code
     error('Integer reading expected')
@@ -101,18 +51,46 @@ end
 %1 = for each segment, which channels are present
 %represent as, start, stop in linearized array?
 %NOTE: Might need to sort linearized array
+
+
 %seg,obj => sort rows
 
+if any(n_reps_per_segment > 1)
+    keyboard
+end
 
-return
+n_total_reads = sum(n_reps_per_segment(seg_linear));
+
+%What about interleaved data ???????
+%When would we ever have multiple reps for interleaved data?????
+%Same byte start????
+%read__is_interleaved = false(1,n_total_reads);
+
+seg_obj_matrix = [seg_linear' raw_obj_linear'];
+seg_obj_matrix = sortrows(seg_obj_matrix);
 
 
-FINAL_READ_SPECS_SIZE = 2*obj.lead_in.n_segs;
-read__id          = zeros(1,FINAL_READ_SPECS_SIZE);
-read__byte_start  = zeros(1,FINAL_READ_SPECS_SIZE);
-read__n_values    = zeros(1,FINAL_READ_SPECS_SIZE);
-read__n_bytes     = zeros(1,FINAL_READ_SPECS_SIZE);
-cur_read_index    = 0;
+seg_starts     = [1 find(diff(seg_obj_matrix(:,1)) ~= 0)+1];
+seg_ends       = [seg_starts(2:end)-1 size(seg_obj_matrix,1)];
+n_objs_per_seg = seg_ends - seg_starts + 1;
+n_reps_all     = n_reps_per_segment(seg_obj_matrix(seg_starts,1));
+
+bytes_per_obj  = raw_meta_obj.
+
+%TODO: Take into account objects which "have data" but have n_values = 0
+
+for iSeg = 1:length(seg_starts)
+   n_reps = n_reps_all(iSeg);
+    
+    
+end
+
+read__obj_id         = zeros(1,n_total_reads);
+read__byte_start     = zeros(1,n_total_reads);
+read__n_values       = zeros(1,n_total_reads);
+read__n_bytes        = zeros(1,n_total_reads);
+
+cur_read_index       = 0;
 
 
 end

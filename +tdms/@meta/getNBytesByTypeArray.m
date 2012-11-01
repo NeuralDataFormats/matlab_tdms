@@ -1,7 +1,5 @@
-function nBytesByType = getNBytesByTypeArray(obj)
+function n_bytes_by_type = getNBytesByTypeArray
 %getNBytesByTypeArray  
-%
-%   NOTE: This might need to move ...
 %
 %   tdms.meta.getNBytesByTypeArray
 %
@@ -15,12 +13,12 @@ function nBytesByType = getNBytesByTypeArray(obj)
 %this array to determine the number of bytes the given type occupies per
 %value.
 
-nBytesByType        = zeros(1,68);
-nBytesByType(1:10)  = [1 2 4 8 1 2 4 8 4 8];
-nBytesByType(25)    = 4;
-nBytesByType(26)    = 8;
-nBytesByType(33)    = 1;
-nBytesByType(68)    = 16;
+n_bytes_by_type        = zeros(1,68);
+n_bytes_by_type(1:10)  = [1 2 4 8 1 2 4 8 4 8];
+n_bytes_by_type(25)    = 4;
+n_bytes_by_type(26)    = 8;
+n_bytes_by_type(33)    = 1;
+n_bytes_by_type(68)    = 16;
 
 end
 

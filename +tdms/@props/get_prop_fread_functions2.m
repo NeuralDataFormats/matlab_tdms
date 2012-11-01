@@ -59,7 +59,7 @@ cur_index = cur_index + 4;
 end
 
 function [out,cur_index] = readDouble(str,cur_index)
-out = typecast(str((cur_index+1):(cur_index+4)),'double');
+out = typecast(str((cur_index+1):(cur_index+8)),'double');
 cur_index = cur_index + 8;
 end
 

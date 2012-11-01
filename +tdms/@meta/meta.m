@@ -23,14 +23,15 @@ classdef meta < handle
         
         fid
         is_index_only %indicates that the filename passed in was the index file
-        reading_index_file = true
+        reading_index_file
         
         props
             %.names
             %.values
         
         
-        raw_meta %Class tdms.raw_meta
+        raw_meta    %Class tdms.raw_meta
+        fixed_meta  
         
         n_bytes_per_read
         n_values_per_read
@@ -64,6 +65,11 @@ classdef meta < handle
            %tdms.meta.readMeta
            readMeta(obj)
         end
+    end
+    
+    methods (Static)
+       names_out = fixNames(names_in) 
+       n_bytes_by_type = getNBytesByTypeArray
     end
     
 end

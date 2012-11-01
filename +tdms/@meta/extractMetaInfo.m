@@ -38,7 +38,8 @@ cur_prop_index  = 0;
 
 meta_data = obj.lead_in.meta_data;
 
-for iSeg = 1:obj.lead_in.n_segs
+%NOTE: It is possible for meta_data to be empty
+for iSeg = find(~cellfun('isempty',meta_data))
     cur_u8_data  = meta_data{iSeg};
     cur_u32_data = get_uint32_data(cur_u8_data);
     
@@ -128,7 +129,9 @@ raw_meta_obj = tdms.raw_meta;
 raw_meta_obj.raw_obj__names        = raw_obj__names(1:cur_obj_index);
 raw_meta_obj.raw_obj__seg_id       = raw_obj__seg_id(1:cur_obj_index);
 raw_meta_obj.raw_obj__idx_len      = raw_obj__idx_len(1:cur_obj_index);
-raw_meta_obj.raw_obj__has_raw_data = raw_meta_obj.obj_len ~= MAX_INT;
+raw_meta_obj.raw_obj__has_raw_data = raw_meta_obj.raw_obj__idx_len ~= MAX_INT;
+
+raw_meta_obj.n_raw_objs = cur_obj_index;
 
 %Parsing of the idx_data
 %-----------------------------------------------------------
