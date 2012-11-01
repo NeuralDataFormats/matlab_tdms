@@ -1,6 +1,14 @@
 function getNPerRead(obj,final_obj_id,n_unique_objs)
-
-
+%
+%
+%   getNPerRead(obj,final_obj_id,n_unique_objs)
+%
+%
+%   NOTE: Importantly, a value of raw_obj__idx_len equals zero specifies
+%   that the object should use the previous index data in which it had
+%   data.
+%
+%   TODO: Finish documentation
 
 
 %For Reference
@@ -23,14 +31,9 @@ final_obj__cur_n_bytes  = zeros(1,n_unique_objs);
 n_values_per_read_final = raw_meta_obj.raw_obj__n_values_per_read;
 n_bytes_per_read_final  = raw_meta_obj.raw_obj__n_bytes_per_read;
 
-
-%TODO: Ensure that MAX_INT occurs for new object list
-%NOTE: If it doesn't that isn't necessarily bad, I just need to write 
-%code that makes sure it is handled right ...
-
-%NOTE: I could potentially do this faster on a per object basis but the
-%code might be a bit messier ...
-for iRaw = find(raw_meta_obj.obj_has_raw_data)
+%NOTE: The length is not often zero. I could write a separte case which
+%only does the previous value checking ...
+for iRaw = find(raw_meta_obj.raw_obj__has_raw_data)
     cur_final_id = final_obj_id(iRaw);
     if raw_obj__idx_len(iRaw) == 0
         if final_obj__set(cur_final_id)
@@ -54,15 +57,15 @@ for iRaw = find(raw_meta_obj.obj_has_raw_data)
 end
 
 %Update bytes per read for non-string types
+%--------------------------------------------------------
+data_types_final = final_obj__data_type(final_obj_id);
 mask = n_bytes_per_read_final == 0 & n_values_per_read_final ~= 0;
-n_bytes_per_read_final(mask) = n_bytes_by_type(raw_obj__data_types(mask)).*n_values_per_read_final(mask);
+n_bytes_per_read_final(mask) = n_bytes_by_type(data_types_final(mask)).*n_values_per_read_final(mask);
 
+%Final assignment
+%--------------------------------------------------------
 obj.n_bytes_per_read  = n_bytes_per_read_final; 
 obj.n_values_per_read = n_values_per_read_final;
 
 
-%Not sure if this is needed
-%data_types_read_final        = data_types_by_obj(final_id);
-
 end
-
