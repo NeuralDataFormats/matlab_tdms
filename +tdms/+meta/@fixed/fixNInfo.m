@@ -5,7 +5,7 @@ function fixNInfo(obj)
 %
 %   Background
 %   =======================================================================
-%   TODO: Finish documentation
+%   See point 1 in class documentation header.
 %
 %   This function:
 %   =======================================================================
@@ -46,8 +46,8 @@ final_obj__cur_n_bytes  = zeros(1,n_unique_objs);
 %These are the output variables. We start with what they were previously.
 %We then update them as we come across instructions that tell us to use the
 %previous value.
-n_values_per_read_final = raw_meta_obj.raw_obj__n_values_per_read;
-n_bytes_per_read_final  = raw_meta_obj.raw_obj__n_bytes_per_read;
+n_values_per_read_fixed = raw_meta_obj.raw_obj__n_values_per_read;
+n_bytes_per_read_fixed  = raw_meta_obj.raw_obj__n_bytes_per_read;
 
 %NOTE: Often there are no zeros. I could write a separte case which
 %only does the previous value checking ...
@@ -55,15 +55,15 @@ for iRaw = find(raw_meta_obj.raw_obj__has_raw_data)
     cur_final_id = final_obj_id(iRaw);
     if raw_obj__idx_len(iRaw) == 0
         if final_obj__set(cur_final_id)
-            n_values_per_read_final(iRaw) = final_obj__cur_n_values(cur_final_id);
-            n_bytes_per_read_final(iRaw)  = final_obj__cur_n_bytes(cur_final_id);
+            n_values_per_read_fixed(iRaw) = final_obj__cur_n_values(cur_final_id);
+            n_bytes_per_read_fixed(iRaw)  = final_obj__cur_n_bytes(cur_final_id);
         else
             %TODO: Provide reference to some error code, improve msg
             error('Channel data info has yet to be set')
         end
     else
-        final_obj__cur_n_values(cur_final_id) = n_values_per_read_final(iRaw);
-        final_obj__cur_n_bytes(cur_final_id)  = n_bytes_per_read_final(iRaw);
+        final_obj__cur_n_values(cur_final_id) = n_values_per_read_fixed(iRaw);
+        final_obj__cur_n_bytes(cur_final_id)  = n_bytes_per_read_fixed(iRaw);
         if final_obj__set(cur_final_id) && final_obj__data_type(cur_final_id) ~= raw_obj__data_types(iRaw)
             %TODO: Provide reference to some error code, improve msg
             error('Data type can''t change ...')
@@ -77,16 +77,14 @@ end
 %Update bytes per read for non-string types
 %--------------------------------------------------------
 data_types_final = final_obj__data_type(final_obj_id);
-
-
-mask = n_bytes_per_read_final == 0 & n_values_per_read_final ~= 0;
-n_bytes_per_read_final(mask) = n_bytes_by_type(data_types_final(mask)).*n_values_per_read_final(mask);
+mask = n_bytes_per_read_fixed == 0 & n_values_per_read_fixed ~= 0;
+n_bytes_per_read_fixed(mask) = n_bytes_by_type(data_types_final(mask)).*n_values_per_read_fixed(mask);
 
 %Final assignment
 %--------------------------------------------------------
-obj.n_bytes_per_read     = n_bytes_per_read_final; 
-obj.n_values_per_read    = n_values_per_read_final;
-obj.final_obj__data_type = final_obj__data_type;
+obj.n_bytes_per_read__fixed     = n_bytes_per_read_fixed; 
+obj.n_values_per_read__fixed    = n_values_per_read_fixed;
+obj.final_obj__data_type        = final_obj__data_type;
 
 
 end
