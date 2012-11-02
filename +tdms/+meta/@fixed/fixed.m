@@ -1,5 +1,18 @@
 classdef fixed < handle
     %
+    %   In order to optimize the speed writing the tdms file there are two
+    %   optimizations that occur that need to be "corrected" for reading.
+    %   
+    %   1) During writing, if a property is set for an object, the object
+    %   specification can specify that it should use the previous
+    %   information given
+    %
+    %
+    %   METHODS
+    %   ===================================================================
+    %   tdms.meta.fixed.createFinalIDInfo - NOTE: Might move into meta and
+    %       pass into this constructor ..., never have as properties
+    %   tdms.meta.fixed.fixNInfo          - 
     
     properties (Hidden)
         parent
@@ -7,21 +20,42 @@ classdef fixed < handle
     end
     
     properties (Hidden)
-        %Part 1 - final ids .createFinalIDInfo
-        %---------------------------------------------
-        final_obj_id__sorted  %final id sorted, 
-        I_sort__raw_to_final  %index of the original value
-        first_instance_of_final_obj
+        %.createFinalIDInfo
+        %------------------------------------------------------------------
+        final_obj_id__sorted            %final id sorted, 
+        I_sort__raw_to_final            %index of the original value in the sorted data
+%         first_instance_of_final_obj     %Not currently used, references the first
+%                                         %index in which the final object
+%                                         %was referenced, could be used to
+%                                         %order objects by write order ...
     end
     
     properties
-        %Part 1 - final ids .createFinalIDInfo
-        %---------------------------------------------
-        final_obj_id       %For each raw object id, this gives the final object id
-        n_unique_objs      %# of unique objects present   
-        unique_obj_names   %
+        %.createFinalIDInfo()
+        %------------------------------------------------------------------
+        final_obj_id       %(double, row vector, length = raw_meta.n_raw_objs
+        %For each raw object id, this gives the final object id
         
-        final_obj__data_type %TODO: Document
+        
+        %Final properties
+        %---------------------------------------------------
+        n_unique_objs        %# of unique objects present   
+        unique_obj_names     %All unique object names with unicode encoding 
+                             %properly handled
+        final_obj__data_type %The data type of each final object. There is 
+                             %only one value per final id element, i.e.
+                             %goes from 1 to n_unique_objs
+        
+        
+        %.fixNInfo()
+        n_bytes_per_read__fixed
+        n_values_per_read__fixed
+        
+
+        %.getDataOrderEachSegment()
+        %For raw data only
+        seg_id  
+        obj_id
     end
     
     methods
@@ -29,36 +63,20 @@ classdef fixed < handle
             obj.parent   = meta_obj;
             obj.raw_meta = meta_obj.raw_meta;
             
+            %NOTE: Knowing the # of final objects allows us to preallocate
+            %data in upcoming function.
             createFinalIDInfo(obj)
+            
+            
+            
             fixNInfo(obj)
+            getDataOrderEachSegment(obj)
+            
+            %NOTE: This maybe should move out of this object ...
+            getReadInstructions(obj)
             
         end
-        function createFinalIDInfo(obj)
-            
-            %MLINT
-            %=====================
-            %#ok<*PROP>  %property reference as variable
-            [sorted_names,I_sort__raw_to_final] = sort(obj.raw_meta.raw_obj__names);
-            I_diff  = find(~strcmp(sorted_names(1:end-1),sorted_names(2:end)));
-            I_start = [1 I_diff + 1];
-            
-            %NOTE: We may eventually want this information ...
-            %obj.first_instance_of_final_obj = I_sort__raw_to_final(I_start);
-            
-            final_obj_id__sorted = zeros(1,raw_meta_obj.n_raw_objs); 
-            final_obj_id__sorted(I_start) = 1;
-            final_obj_id__sorted = cumsum(final_obj_id__sorted);
-            final_obj_id(I_sort__raw_to_final) = final_obj_id__sorted;
-            n_unique_objs = length(sorted_names);
-            
-            obj.final_obj_id__sorted = final_obj_id__sorted;
-            obj.final_obj_id         = final_obj_id;
-            obj.n_unique_objs        = n_unique_objs;
-            obj.I_sort__raw_to_final = I_sort__raw_to_final;
-            
-            %Fix the object names
-            obj.unique_obj_names = tdms.meta.fixNames(sorted_names(I_start));
-        end
+      
     end
     
 end

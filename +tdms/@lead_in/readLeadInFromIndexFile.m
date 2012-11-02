@@ -25,8 +25,6 @@ fid = obj.fid;
 all_meta_data_u8 = fread(fid,[1 Inf],'*uint8'); 
 fclose(fid);
 
-
-
 %Approach: Assume everything is good, then 
 %check afterwards whether or not it is ...
 
@@ -86,8 +84,8 @@ obj.toc_masks     = typecastC(lead_in_data(5:8,:),'uint32');
 
 %skip version number for now
 
-seg_lengths   = double(typecastC(lead_in_data(13:20,:),'uint64'));
-meta_lengths  = double(typecastC(lead_in_data(21:28,:),'uint64'));
+seg_lengths   = double(typecastC(lead_in_data(13:20,:),'uint64'))';
+meta_lengths  = double(typecastC(lead_in_data(21:28,:),'uint64'))';
 
 
 %- All meta_starts are separated from each other by the lead in length (28)
@@ -95,7 +93,7 @@ meta_lengths  = double(typecastC(lead_in_data(21:28,:),'uint64'));
 %- The first meta segment starts at 29, which is the lead in length plus 1
 %(for 1 based indexing)
 %- NOTE: The 28 is within the cumsum, not outside of it
-meta_starts       = 29 + [ 0; cumsum(meta_lengths(1:end-1) + 28) ];
+meta_starts       = 29 + [0 cumsum(meta_lengths(1:end-1) + 28)];
 obj.data_lengths  = seg_lengths - meta_lengths;
 obj.data_starts   = meta_starts + meta_lengths;
 

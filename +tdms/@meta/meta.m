@@ -20,6 +20,8 @@ classdef meta < handle
     
     properties        
         lead_in %(class tdms.lead_in)
+        raw_meta    %Class tdms.raw_meta
+        fixed_meta  
         
         fid
         is_index_only %indicates that the filename passed in was the index file
@@ -27,15 +29,7 @@ classdef meta < handle
         
         props
             %.names
-            %.values
-        
-        
-        raw_meta    %Class tdms.raw_meta
-        fixed_meta  
-        
-        n_bytes_per_read
-        n_values_per_read
-        
+            %.values        
     end
     
     properties (Constant)

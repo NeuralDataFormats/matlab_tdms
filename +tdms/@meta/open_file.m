@@ -26,16 +26,21 @@ obj.is_index_only = strcmp(fileExt,obj.TDMS_INDEX_FILE_EXTENSION);
 %
 %1) only the index file was passed in
 %------------------------------------------------------------------
-if ~obj.is_index_only && obj.opt_USE_INDEX
+
+if obj.is_index_only
+    obj.reading_index_file = true;
+elseif obj.opt_USE_INDEX
     %switch from tdms to tmds index file extension
     index_filepath = fullfile(tdmsPathToFile,[tdmsNameOnly obj.TDMS_INDEX_FILE_EXTENSION]);
     if exist(index_filepath,'file')
         %NOTE: Could throw warning if it doesn't exist ...
         filepath = index_filepath;
+        obj.reading_index_file = true;
+    else
+        obj.reading_index_file = false;
     end
-    opt.reading_index_file = true;
 else
-    opt.reading_index_file = false;
+    obj.reading_index_file = false;
 end
 
 %Check for file existence and open

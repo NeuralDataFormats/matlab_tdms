@@ -1,7 +1,4 @@
-function [seg_linear,raw_obj_linear] = getDataReadOrderEachSegment(obj,final_obj_id__sorted,I_obj_orig)
-%
-%
-%
+function getDataOrderEachSegment(obj)
 %
 %
 %
@@ -43,6 +40,18 @@ function [seg_linear,raw_obj_linear] = getDataReadOrderEachSegment(obj,final_obj
 %   raw_obj_linear = [1 1 2 2 2 3 3 4 5 5]
 %
 %   NOTE: These values will ONLY EXIST for objects with data.
+%
+%   See Also: 
+%       tdms.meta.fixed.fixNInfo
+%       
+%
+%   
+
+%Local prop assignment
+
+final_obj_id__sorted = obj.final_obj_id__sorted;
+I_obj_orig           = obj.I_sort__raw_to_final;
+
 
 
 raw_meta_obj  = obj.raw_meta;
@@ -53,8 +62,9 @@ raw_meta_obj  = obj.raw_meta;
 %Find the end segments based on new lists
 %The actual end segments are 1 prior to a new list, as the segment with a
 %new list does not contain the old object
-I_new_obj_start_seg  = find(obj.lead_in.new_obj_list)'; %NOTE: Make row vector
-I_new_obj_end_seg_p1 = [I_new_obj_start_seg(2:end) obj.lead_in.n_segs+1];
+n_segs_p1 = obj.parent.lead_in.n_segs+1;
+I_new_obj_start_seg  = find(obj.parent.lead_in.new_obj_list)'; %NOTE: Make row vector
+I_new_obj_end_seg_p1 = [I_new_obj_start_seg(2:end) n_segs_p1];
 I_new_obj_end_seg    = I_new_obj_end_seg_p1 - 1;
 
 %Here we correct for a change in the object specification that occurs
@@ -67,14 +77,14 @@ I_new_obj_end_seg    = I_new_obj_end_seg_p1 - 1;
 %the case above this would correspond to raw objects 2 & 4 sharing an end
 %segment of 6, but also the same final id (value not specified).
 raw_obj__seg_id__sorted = raw_meta_obj.raw_obj__seg_id(I_obj_orig);
-[~,end_seg_I] = histc(raw_obj__seg_id__sorted,[I_new_obj_start_seg obj.lead_in.n_segs+1]);
+[~,end_seg_I] = histc(raw_obj__seg_id__sorted,[I_new_obj_start_seg n_segs_p1]);
 
-%                   same object id                          same end segment
+%Change if                same object id                AND      same end segment
 change_end_seg_I = find(diff(final_obj_id__sorted) == 0 & diff(end_seg_I) == 0);
 
 end_segments__sorted = I_new_obj_end_seg(end_seg_I);
 if ~isempty(change_end_seg_I)
-   %Grab segment of the index to the right and end 1 less than that value
+   %Grab segment of the index to the right and end at the segment before it
    end_segments__sorted(change_end_seg_I) = raw_obj__seg_id__sorted(change_end_seg_I + 1)-1;
 end
 
@@ -88,7 +98,7 @@ start_segments     = raw_meta_obj.raw_obj__seg_id;
 n_segs_for_raw_obj = end_segments - start_segments + 1;
 
 %Filter important values by whether or not raw data is present
-raw_obj_ids_with_data = find(raw_meta_obj.raw_obj__has_raw_data);
+raw_obj_ids_with_data = find(raw_meta_obj.raw_obj__has_raw_data & obj.n_values_per_read > 0);
 n_segs_for_raw_obj    = n_segs_for_raw_obj(raw_obj_ids_with_data);
 start_segments        = start_segments(raw_obj_ids_with_data);
 
@@ -121,3 +131,11 @@ for iObj = 1:length(start_segments)
         start_segments(iObj):start_segments(iObj)+n_segs_for_raw_obj(iObj)-1;
     cur_I = cur_I + n_segs_for_raw_obj(iObj);
 end
+
+seg_obj_merged = [seg_linear' raw_obj_linear'];
+seg_obj_merged = sortrows(seg_obj_merged);
+
+obj.seg_id = seg_obj_merged(:,1)';
+obj.obj_id = seg_obj_merged(:,2)';
+
+

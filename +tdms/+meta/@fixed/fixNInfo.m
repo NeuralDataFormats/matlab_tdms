@@ -79,7 +79,6 @@ end
 data_types_final = final_obj__data_type(final_obj_id);
 
 
-
 mask = n_bytes_per_read_final == 0 & n_values_per_read_final ~= 0;
 n_bytes_per_read_final(mask) = n_bytes_by_type(data_types_final(mask)).*n_values_per_read_final(mask);
 

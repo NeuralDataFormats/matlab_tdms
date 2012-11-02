@@ -3,30 +3,17 @@ function readMeta(obj)
 %
 %   NAME: tdms.meta.readMeta
 
+obj.lead_in    = tdms.lead_in(obj);
 
-%Read the lead in information 
-%-----------------------------------------------
-%TODO: Rename to lead_in once other class has been cleared
-obj.lead_in = tdms.lead_in_array(obj);
-
-%TODO: Move method to constructor ...
-extractMetaInfo(obj) %Populates raw meta
-
-raw_meta_obj  = obj.raw_meta;
-
-
+obj.raw_meta   = tdms.meta.raw(obj);
 
 obj.fixed_meta = tdms.meta.fixed(obj);
 
-
+keyboard
 
 %Property Population --------------------------------------------------
 getObjProps(obj,final_obj_id,n_unique_objs);
 
-
-
-
-[seg_linear,raw_obj_linear] = getDataReadOrderEachSegment(obj,final_obj_id__sorted,I_obj_orig);
 
 
 %n_values_linear = obj.n_values_per_read(raw_obj_linear);
@@ -75,7 +62,7 @@ seg_ends       = [seg_starts(2:end)-1 size(seg_obj_matrix,1)];
 n_objs_per_seg = seg_ends - seg_starts + 1;
 n_reps_all     = n_reps_per_segment(seg_obj_matrix(seg_starts,1));
 
-bytes_per_obj  = raw_meta_obj.
+%bytes_per_obj  = raw_meta_obj.
 
 %TODO: Take into account objects which "have data" but have n_values = 0
 
