@@ -7,13 +7,15 @@ obj.lead_in    = tdms.lead_in(obj);
 
 obj.raw_meta   = tdms.meta.raw(obj);
 
+obj.final_ids  = tdms.meta.final_id(obj);
+
 obj.fixed_meta = tdms.meta.fixed(obj);
 
-keyboard
+obj.props      = tdms.props(obj); 
 
-%Property Population --------------------------------------------------
-getObjProps(obj,final_obj_id,n_unique_objs);
+return
 
+%TODO: call constructor for read instructions ...
 
 
 %n_values_linear = obj.n_values_per_read(raw_obj_linear);

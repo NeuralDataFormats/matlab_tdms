@@ -43,32 +43,7 @@ classdef fixed < handle
         raw_meta
     end
     
-    properties (Hidden)
-        %.createFinalIDInfo
-        %------------------------------------------------------------------
-        final_obj_id__sorted            %final id sorted, 
-        I_sort__raw_to_final            %index of the original value in the sorted data
-%         first_instance_of_final_obj     %Not currently used, references the first
-%                                         %index in which the final object
-%                                         %was referenced, could be used to
-%                                         %order objects by write order ...
-    end
-    
-    properties
-        %.createFinalIDInfo()
-        %------------------------------------------------------------------
-        %length = raw_meta.n_raw_objs
-        final_obj_id       %(double, row vector, length = raw_meta.n_raw_objs
-        %For each raw object id, this gives the final object id
-        
-        %Final properties
-        %---------------------------------------------------
-        %.createFinalIDInfo()
-        %-----------------------
-        n_unique_objs        %# of unique objects present   
-        unique_obj_names     %(length = n_unique_objs) All unique object 
-                             %names with unicode encoding properly handled
-                             
+    properties                             
         %.fixNInfo()     
         %-----------------------
         final_obj__data_type %(length = n_unique_objs) The data type of each final object. There is 
@@ -91,17 +66,10 @@ classdef fixed < handle
         function obj = fixed(meta_obj)
             obj.parent   = meta_obj;
             obj.raw_meta = meta_obj.raw_meta;
-            
-            %NOTE: Knowing the # of final objects allows us to preallocate
-            %data in upcoming function.
-            createFinalIDInfo(obj)
-            
+                        
             fixNInfo(obj)
+            
             getDataOrderEachSegment(obj)
-            
-            %NOTE: This maybe should move out of this object ...
-            getReadInstructions(obj)
-            
         end
       
     end

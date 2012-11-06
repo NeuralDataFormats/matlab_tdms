@@ -1,4 +1,4 @@
-function fread_prop_info = get_prop_fread_functions2()
+function fread_prop_info = get_prop_fread_functions()
 %
 %
 %   Static Method

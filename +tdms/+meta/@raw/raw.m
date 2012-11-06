@@ -31,9 +31,12 @@ classdef raw < handle
         %   MAX_INT - intmax('int32') - no data
         
         %Dependent variables (not made dependent)
+        %i.e. the following few raw_obj variables are computed
+        %based on the above properties
         raw_obj__has_raw_data %Whether or not idx_len = MAX_INT
         %IMPORTANTLY: This doesn't guarantee that the object actually has
-        %data. Some writers may specify an 
+        %data. Some writers may specify an object with # of values to read 
+        %equal to zero 
         
         %NOTE: These are somewhat incorrect as we haven't taken into
         %account the "same as before" status when obj_len = 0

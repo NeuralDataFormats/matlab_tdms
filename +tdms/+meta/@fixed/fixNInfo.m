@@ -24,12 +24,12 @@ function fixNInfo(obj)
 %   Class: tdms.meta.fixed
 
 %Object properties for quicker reference
-final_obj_id  = obj.final_obj_id;
-n_unique_objs = obj.n_unique_objs;
+final_ids_obj = obj.parent.final_ids;
+final_obj_id  = final_ids_obj.final_obj_id;
+n_unique_objs = final_ids_obj.n_unique_objs;
 
 %For Reference
 %------------------------------------------------------------------
-n_bytes_by_type     = tdms.meta.getNBytesByTypeArray;
 raw_meta_obj        = obj.raw_meta;
 raw_obj__idx_len    = raw_meta_obj.raw_obj__idx_len;
 raw_obj__data_types = raw_meta_obj.raw_obj__data_types;
@@ -64,9 +64,11 @@ for iRaw = find(raw_meta_obj.raw_obj__has_raw_data)
     else
         final_obj__cur_n_values(cur_final_id) = n_values_per_read_fixed(iRaw);
         final_obj__cur_n_bytes(cur_final_id)  = n_bytes_per_read_fixed(iRaw);
-        if final_obj__set(cur_final_id) && final_obj__data_type(cur_final_id) ~= raw_obj__data_types(iRaw)
-            %TODO: Provide reference to some error code, improve msg
-            error('Data type can''t change ...')
+        if final_obj__set(cur_final_id)
+            if final_obj__data_type(cur_final_id) ~= raw_obj__data_types(iRaw)
+                %TODO: Provide reference to some error code, improve msg
+                error('Data type can''t change ...')
+            end
         else
             final_obj__set(cur_final_id) = true;
             final_obj__data_type(cur_final_id) = raw_obj__data_types(iRaw);
@@ -77,8 +79,13 @@ end
 %Update bytes per read for non-string types
 %--------------------------------------------------------
 data_types_final = final_obj__data_type(final_obj_id);
-mask = n_bytes_per_read_fixed == 0 & n_values_per_read_fixed ~= 0;
-n_bytes_per_read_fixed(mask) = n_bytes_by_type(data_types_final(mask)).*n_values_per_read_fixed(mask);
+update_mask      = n_bytes_per_read_fixed == 0 & n_values_per_read_fixed ~= 0;
+n_bytes_by_type  = tdms.meta.getNBytesByTypeArray;
+
+%TODO: Make multiple assignments here
+
+n_bytes_per_read_fixed(update_mask) = n_bytes_by_type(data_types_final(update_mask))...
+    .*n_values_per_read_fixed(update_mask);
 
 %Final assignment
 %--------------------------------------------------------

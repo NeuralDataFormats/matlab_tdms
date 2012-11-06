@@ -10,7 +10,7 @@ function populateObject(obj)
 %======================================
 %#ok<*AGROW>  %Autogrow ok
 
-fread_prop_info = tdms.props.get_prop_fread_functions2;
+fread_prop_info = tdms.props.get_prop_fread_functions;
 
 MAX_INT        = 2^32-1;
 INIT_OBJ_SIZE  = obj.options_obj.raw__INIT_OBJ_SIZE;
@@ -40,6 +40,8 @@ meta_data = obj.lead_in.meta_data;
 %NOTE: It is possible for meta_data to be empty
 for iSeg = find(~cellfun('isempty',meta_data))
     cur_u8_data  = meta_data{iSeg};
+    
+    %TODO: Replace with non-cell array version
     cur_u32_data = get_uint32_data(cur_u8_data);
     
     n_objects = cur_u32_data(1,1);

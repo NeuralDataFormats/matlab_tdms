@@ -20,16 +20,16 @@ classdef meta < handle
     
     properties        
         lead_in %(class tdms.lead_in)
-        raw_meta    %Class tdms.raw_meta
-        fixed_meta  
+        raw_meta     %Class tdms.meta.raw
+        final_ids    %Class tdms.meta.final_id
+        fixed_meta   %Class tdms.meta.fixed
+        
         
         fid
         is_index_only %indicates that the filename passed in was the index file
         reading_index_file
         
-        props
-            %.names
-            %.values        
+        props        %Class tdms.props
     end
     
     properties (Constant)

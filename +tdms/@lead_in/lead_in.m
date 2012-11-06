@@ -39,7 +39,9 @@ classdef lead_in < handle
         is_interleaved  %
         is_big_endian   
         has_raw_daqmx   %TODO: Provide section describing raw_daqmx
-
+    end
+    
+    properties
         n_segs
         data_starts     %(double, row vector) byte index in data file where reading starts
         data_lengths    %(double, row vector) byte lengths of all segments

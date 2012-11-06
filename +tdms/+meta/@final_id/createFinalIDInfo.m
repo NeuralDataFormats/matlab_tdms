@@ -2,7 +2,7 @@ function createFinalIDInfo(obj)
 %createFinalIDInfo(obj)
 %
 
-raw_meta_obj = obj.raw_meta;
+raw_meta_obj = obj.parent.raw_meta;
 
 %Sort the raw names, there are likely duplicates
 %--------------------------------------------------------------
