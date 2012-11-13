@@ -14,6 +14,8 @@ function open_file(obj,filepath)
 %   .fid 
 %   .reading_index_file
 
+options_obj = obj.options_obj;
+
 [tdmsPathToFile,tdmsNameOnly,fileExt] = fileparts(filepath);
 obj.is_index_only = strcmp(fileExt,obj.TDMS_INDEX_FILE_EXTENSION);
 
@@ -29,7 +31,7 @@ obj.is_index_only = strcmp(fileExt,obj.TDMS_INDEX_FILE_EXTENSION);
 
 if obj.is_index_only
     obj.reading_index_file = true;
-elseif obj.opt_USE_INDEX
+elseif options_obj.meta_USE_INDEX
     %switch from tdms to tmds index file extension
     index_filepath = fullfile(tdmsPathToFile,[tdmsNameOnly obj.TDMS_INDEX_FILE_EXTENSION]);
     if exist(index_filepath,'file')

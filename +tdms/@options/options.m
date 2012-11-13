@@ -12,7 +12,6 @@ classdef options
     %META OPTIONS ==============================================
     properties
        meta_USE_INDEX
-       meta_OBJ_GROWTH_RATE
     end
     
     %RAW_OBJ OPTIONS ===========================================

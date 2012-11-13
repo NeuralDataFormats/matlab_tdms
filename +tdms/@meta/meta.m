@@ -10,12 +10,7 @@ classdef meta < handle
     
     %OPTIONS  ===================================================
     properties
-        options_obj
-    end
-    
-    properties
-        opt_USE_INDEX       = true
-        opt_OBJ_GROWTH_RATE = 20; 
+        options_obj  %Class tdms.options
     end
     
     properties        
@@ -23,16 +18,18 @@ classdef meta < handle
         raw_meta     %Class tdms.meta.raw
         final_ids    %Class tdms.meta.final_id
         fixed_meta   %Class tdms.meta.fixed
+        read_info    %Class tdms.data.read_info
         
+        props        %Class tdms.props
         
         fid
         is_index_only %indicates that the filename passed in was the index file
         reading_index_file
         
-        props        %Class tdms.props
+        
     end
     
-    properties (Constant)
+    properties (Constant,Hidden)
        TDMS_INDEX_FILE_EXTENSION = '.tdms_index';
        TDMS_FILE_EXTENSION       = '.tdms';
        STRING_ENCODING           = 'UTF-8';

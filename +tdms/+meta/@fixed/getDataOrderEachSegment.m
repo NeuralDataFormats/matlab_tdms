@@ -83,6 +83,7 @@ n_segs_for_raw_obj    = end_segments - start_segments + 1;
 %as by whether or not there are actually values to read. NOTE: The goal
 %here is to eventually form reading instructions.
 raw_obj_ids_with_data = find(raw_obj__has_raw_data & n_values_per_read__fixed > 0);
+
 n_segs_for_raw_obj    = n_segs_for_raw_obj(raw_obj_ids_with_data);
 start_segments        = start_segments(raw_obj_ids_with_data);
 

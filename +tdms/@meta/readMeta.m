@@ -13,6 +13,8 @@ obj.fixed_meta = tdms.meta.fixed(obj);
 
 obj.props      = tdms.props(obj); 
 
+obj.read_info  = tdms.data.read_info(obj);
+
 return
 
 %TODO: call constructor for read instructions ...

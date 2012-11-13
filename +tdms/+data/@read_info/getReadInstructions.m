@@ -22,25 +22,33 @@ INTEGER_EPS = 0.000001;
 % % % % obj_id
 
 %Quicker property references:
-seg_id = obj.seg_id;
-obj_id = obj.obj_id;
 
-lead_in = obj.parent.lead_in;
+fixed_meta_obj = obj.parent.fixed_meta;
+
+seg_id = fixed_meta_obj.seg_id;
+obj_id = fixed_meta_obj.obj_id;
+
+lead_in_obj = obj.parent.lead_in;
 
 
-seg_starts_I   = [1 find(diff(seg_id) ~= 0)+1];
+
+
+seg_starts_I   = [1 find(diff(seg_id) ~= 0) + 1];
 seg_ends_I     = [seg_starts_I(2:end)-1 length(seg_id)];
 n_objs_per_seg = seg_ends_I - seg_starts_I + 1;
 unique_seg_ids = seg_id(seg_starts_I); %NOTE we are only reading from 
 %segments that have data
 
-local__data_lengths      = lead_in.data_lengths(unique_seg_ids);
-local__n_bytes_per_read  = obj.n_bytes_per_read(obj_id);
-local__n_values_per_read = obj.n_values_per_read(obj_id);
-local__seg_data_starts   = lead_in.data_starts(unique_seg_ids);
+local__data_lengths      = lead_in_obj.data_lengths(unique_seg_ids);
+local__n_bytes_per_read  = fixed_meta_obj.n_bytes_per_read__fixed(obj_id);
+local__n_values_per_read = fixed_meta_obj.n_values_per_read__fixed(obj_id);
+local__seg_data_starts   = lead_in_obj.data_starts(unique_seg_ids);
+
+
+
 
 %NOTE: Input 1 must be column vector, sz must be [N 1]
-n_bytes_per_read_per_segment = accumarray(seg_id',local__n_bytes_per_read,[lead_in.n_segs 1])';
+n_bytes_per_read_per_segment = accumarray(seg_id',local__n_bytes_per_read,[lead_in_obj.n_segs 1])';
 n_reps_per_segment           = local__data_lengths./n_bytes_per_read_per_segment(unique_seg_ids);
 
 if any(abs(n_reps_per_segment - round(n_reps_per_segment)) > INTEGER_EPS)
@@ -84,6 +92,10 @@ for iSeg = 1:length(seg_starts_I)
    
 end
 
+%NOTE: I think alot of things can come out of the loop if we use object
+%indexing => read__obj_id
+
+formattedWarning('Still working here')
 keyboard
 end
 
