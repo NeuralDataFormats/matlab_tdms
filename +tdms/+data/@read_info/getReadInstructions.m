@@ -1,50 +1,45 @@
 function getReadInstructions(obj)
 %
+%   TODO: Finish documentation
 %
-%   Output an object ...
 
+%This value determines if we've made an error in processing
+%the read instructions if the length of our data (in bytes) divided by the # of bytes
+%we are supposed to read through a single pass, doesn't come out to an
+%integer. As an example, if our data length was 10 bytes, and each read we
+%were supposed to read 6, 10/6 is not an integer, so this is an error.
+%abs(10/6 - round(10/6)) > INTEGER_EPS, thus error
 INTEGER_EPS = 0.000001;
 
-% % % % final_obj_id       %For each raw object id, this gives the final object id
-% % % % 
-% % % % %.fixNInfo()
-% % % % n_bytes_per_read
-% % % % n_values_per_read
-% % % % 
-% % % % %Final properties
-% % % % %---------------------------------------------------
-% % % % n_unique_objs        %# of unique objects present   
-% % % % unique_obj_names     %
-% % % % final_obj__data_type %TODO: Document
-% % % % 
-% % % % %For raw data only
-% % % % seg_id  
-% % % % obj_id
+
 
 %Quicker property references:
+%----------------------------------------------------------------
+fixed_meta_obj   = obj.parent.fixed_meta;
+seg_id           = fixed_meta_obj.seg_id;
+obj_id           = fixed_meta_obj.obj_id;
+n_bytes_per_read__fixed = fixed_meta_obj.n_bytes_per_read__fixed;
+n_values_per_read__fixed = fixed_meta_obj.n_values_per_read__fixed;
 
-fixed_meta_obj = obj.parent.fixed_meta;
+lead_in_obj      = obj.parent.lead_in;
+data_lengths     = lead_in_obj.data_lengths;
+data_starts      = lead_in_obj.data_starts;
 
-seg_id = fixed_meta_obj.seg_id;
-obj_id = fixed_meta_obj.obj_id;
+final_id_obj     = obj.parent.final_ids;
+final_obj_ids    = final_id_obj.final_obj_id;
 
-lead_in_obj = obj.parent.lead_in;
-
-
-
-
+%Some initial parsing
+%----------------------------------------------------------------
 seg_starts_I   = [1 find(diff(seg_id) ~= 0) + 1];
 seg_ends_I     = [seg_starts_I(2:end)-1 length(seg_id)];
 n_objs_per_seg = seg_ends_I - seg_starts_I + 1;
 unique_seg_ids = seg_id(seg_starts_I); %NOTE we are only reading from 
 %segments that have data
 
-local__data_lengths      = lead_in_obj.data_lengths(unique_seg_ids);
-local__n_bytes_per_read  = fixed_meta_obj.n_bytes_per_read__fixed(obj_id);
-local__n_values_per_read = fixed_meta_obj.n_values_per_read__fixed(obj_id);
-local__seg_data_starts   = lead_in_obj.data_starts(unique_seg_ids);
-
-
+local__data_lengths      = data_lengths(unique_seg_ids);
+local__n_bytes_per_read  = n_bytes_per_read__fixed(obj_id);
+local__n_values_per_read = n_values_per_read__fixed(obj_id);
+local__seg_data_starts   = data_starts(unique_seg_ids);
 
 
 %NOTE: Input 1 must be column vector, sz must be [N 1]
@@ -89,14 +84,15 @@ for iSeg = 1:length(seg_starts_I)
    read__n_values(cur_I+1:cur_I+cur_n_reads)   = repmat_quick(cur_values_per_read,cur_n_reps);
    
    cur_I = cur_I + cur_n_reads;
-   
 end
 
-%NOTE: I think alot of things can come out of the loop if we use object
-%indexing => read__obj_id
+%NOTE: Need to now go from raw to final ...
 
-formattedWarning('Still working here')
-keyboard
+obj.obj_id     = final_obj_ids(read__obj_id);
+obj.byte_start = read__byte_start;
+obj.n_values   = read__n_values;
+obj.n_bytes    = read__n_bytes;
+
 end
 
 function output = repmat_quick(row_vector,N)

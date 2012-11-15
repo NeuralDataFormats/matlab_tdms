@@ -45,21 +45,25 @@ classdef fixed < handle
     
     properties                             
         %.fixNInfo()     
-        %-----------------------
+        %-----------------------------------------------------------------
         final_obj__data_type %(length = n_unique_objs) The data type of each final object. There is 
                              %only one value per final id element, i.e.
                              %goes from 1 to n_unique_objs
         
         %.fixNInfo()
-        %------------------------
+        %-----------------------------------------------------------
+        %length is one for each raw object
+        %objects are fixed in that they don't rely on previous values
         n_bytes_per_read__fixed
         n_values_per_read__fixed
         
         %.getDataOrderEachSegment()
-        %-------------------------------
-        %For raw data only
-        seg_id  
-        obj_id
+        %-------------------------------------------------------
+        %Specifies reads for each object with data in each segment
+        %- i.e. seg_id and obj_id are paired
+        %IMPORTANTLY: These are sorted by seg_id first, then obj_id
+        seg_id %segment of the object
+        obj_id %raw obj id, can be used for indexing into raw_obj properties
     end
     
     methods
@@ -69,6 +73,7 @@ classdef fixed < handle
                         
             fixNInfo(obj)
             
+            %tdms.meta.fixed.getDataOrderEachSegment
             getDataOrderEachSegment(obj)
         end
       
