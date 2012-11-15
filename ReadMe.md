@@ -8,7 +8,7 @@ I have nearly finished the meta data processing of the file, at least for tdms f
 
 ## Improvements
 
-1) Speed. This implementation should be a lot faster.
-2) Ease of use. By using handle classes, doing things like multiple reads in which the user holds onto the header information between reads should be easier. This also includes things like specialized reading of channels.
-3) Better documentation.
+1. Speed. This implementation should be a lot faster.
+2. Ease of use. By using handle classes, doing things like multiple reads in which the user holds onto the header information between reads should be easier. This also includes things like specialized reading of channels.
+3. Better documentation.
 
