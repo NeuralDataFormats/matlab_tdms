@@ -7,7 +7,7 @@ classdef lead_in < handle
     %   tdms.lead_in.readLeadInFromIndexFile
     %   
     %   DESIGN DECISIONS
-    %   =================================================
+    %   ===================================================================
     %   1) Originally the lead in was specifically meant to handle
     %   only the lead in portion of the reading, and not anything 
     %   related to the meta data. An array of lead in objects proved to be
@@ -16,16 +16,19 @@ classdef lead_in < handle
     %   single one.
     %
     %   TODO
-    %   =============================================================
+    %   ===================================================================
     %   1) Only reading from .tdms_index files is currently supported
     %
     
-    %INPUTS TO CLASS ==========================================
+    %INPUTS TO CLASS ======================================================
     properties (Hidden)
-        fid
-        reading_index_file
-        options_obj
-        first_word
+        fid                 %Reference to fid of open file
+        reading_index_file  %true when reading from index file, false indicates
+        %we are reading from the data file
+        options_obj         %Class: tdms.lead_in
+        first_word          %first four bytes of each lead in, this varies 
+        %depending on whether you are reading the index file or the data
+        %file.
         
         toc_masks       %instructions for each segment
     end

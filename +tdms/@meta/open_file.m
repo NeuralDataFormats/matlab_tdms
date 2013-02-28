@@ -21,14 +21,13 @@ obj.is_index_only = strcmp(fileExt,obj.TDMS_INDEX_FILE_EXTENSION);
 
 %Use index file if:
 %1) .tdms was passed in
-%AND 2) we allow index reading - obj.opt_USE_INDEX
+%AND 2) we allow index reading - meta_USE_INDEX
 %AND 3) the index file exists
 %
 %   OR
 %
 %1) only the index file was passed in
 %------------------------------------------------------------------
-
 if obj.is_index_only
     obj.reading_index_file = true;
 elseif options_obj.meta_USE_INDEX
@@ -49,10 +48,10 @@ end
 %---------------------------------------------------------------
 if ~exist(filepath,'file')
    error('Specified file does not exist:\n%s\n',filepath) 
-end
+end 
 
-
-obj.fid = fopen(filepath,'r',obj.MACHINE_FORMAT,obj.STRING_ENCODING);
+obj.fid       = fopen(filepath,'r',obj.MACHINE_FORMAT,obj.STRING_ENCODING);
+obj.file_open = true; 
 
 
 end
