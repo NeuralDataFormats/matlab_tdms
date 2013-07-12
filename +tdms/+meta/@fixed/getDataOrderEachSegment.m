@@ -5,12 +5,13 @@ function getDataOrderEachSegment(obj)
 %PROBLEM DESCRIPTION:
 %==================================================================
 %The TDMS file specifies when to start reading a new object. It does not
-%EXPLICITLY specify for each object that it is present in whether or not to
-%read the object. Every time a new object list is specified the previous
+%EXPLICITLY specify for each segment which objects are present.
+%
+%Every time a new object list is specified the previous
 %object list terminates. Since we don't determine uniqueness of objects, it
 %is possible that a channel is respecified without a new object list
 %occuring. In this case we need to realize that the object has been
-%respecified and not continue trying to read the segment until a new list.
+%respecified and not continue trying to read the object until a new list.
 %
 %   An example is shown below.
 %   Let raw objects 1,2,4,5 all represent the same final object
@@ -27,12 +28,14 @@ function getDataOrderEachSegment(obj)
 %   segment 7 a new list was created, so we would read segments 7 & 8 using
 %   the instructions from raw object 5.
 %
-%   For raw object 3, it is read for segments 5 & 6. 
+%   For raw object 3, it is read for segments 5 & 6 and stops because of
+%   the new list specification for segment 7.
 %
 %   NOTE: The representation of raw objects is realistic here in that the
 %   they are ordered by their first encounter in the file, not by channel.
 %   In other words raw object 3 arrives at segment 5, before objects 4 & 5
-%   in segments 6 & 7.
+%   in segments 6 & 7. This raw object id is my definition and follows an
+%   incrementor based on object specification.
 %
 %   OUTPUTS - for the example above
 %   =======================================================================
@@ -48,9 +51,9 @@ function getDataOrderEachSegment(obj)
 %Local property assignment
 %-------------------------------------------------
 %NOTE: helper__getEndReadSegments also accesses properties as well
-raw_meta_obj          = obj.parent.raw_meta;
-raw_obj__seg_id       = raw_meta_obj.raw_obj__seg_id;
-raw_obj__has_raw_data = raw_meta_obj.raw_obj__has_raw_data;
+raw_meta_obj             = obj.parent.raw_meta;
+raw_obj__seg_id          = raw_meta_obj.raw_obj__seg_id;
+raw_obj__has_raw_data    = raw_meta_obj.raw_obj__has_raw_data;
 n_values_per_read__fixed = obj.n_values_per_read__fixed;
 
 %Local function call -------------------------
@@ -142,6 +145,16 @@ end
 
 function end_segments = helper__getEndReadSegments(obj)
 %
+%   end_segments = helper__getEndReadSegments(obj)
+%
+%   The goal of this function is to determine when each object should stop
+%   being read, or more specifically, the last segment which contains data
+%   from the raw object.
+%
+%   Segments end when any of the following is true:
+%   1) A new segment list occurs
+%   2) The final object is redefined. (New raw object, same final)
+%
 
 %Local prop assignment
 %-------------------------------------------------------------
@@ -153,12 +166,11 @@ lead_in_obj          = obj.parent.lead_in;
 new_obj_list         = lead_in_obj.new_obj_list;
 n_segs               = lead_in_obj.n_segs;
 
+raw_meta_obj         = obj.raw_meta;
+raw_obj__seg_id      = obj.n_raw_objs;
 
-raw_meta_obj  = obj.raw_meta;
-
-%STEP 1: Determine the appropriate end segment for each raw object
-%==========================================================================
-
+%Step 1 - Get possible end segments baed on new lists
+%--------------------------------------------------------------------------
 %Find the end segments based on new lists
 %The actual end segments are 1 prior to a new list, as the segment with a
 %new list does not contain the old object
@@ -166,6 +178,19 @@ n_segs_p1 = n_segs + 1;
 I_new_obj_start_seg  = find(new_obj_list)'; %NOTE: Make row vector
 I_new_obj_end_seg_p1 = [I_new_obj_start_seg(2:end) n_segs_p1];
 I_new_obj_end_seg    = I_new_obj_end_seg_p1 - 1;
+seg_bounds           = [I_new_obj_start_seg n_segs_p1];
+
+%Step 2 - Get end segments, ignoring object redefinitions
+%--------------------------------------------------------------------------
+[~,I_end_seg] = histc(raw_obj__seg_id,seg_bounds);
+end_segments  = seg_bounds(I_end_seg);
+
+%Step 3 - Fix object redefinitions
+%--------------------------------------------------------------------------
+
+%I'm trying to simplify this code ...
+keyboard
+
 
 %Here we correct for changes in object specifications that occur
 %without a corresponding new object list. This is alright, but means that
@@ -185,7 +210,7 @@ raw_obj__seg_id__sorted = raw_meta_obj.raw_obj__seg_id(I_obj_orig);
 
 %The question these next two lines ask, is which two "starts" is each
 %object specification between.
-seg_bounds              = [I_new_obj_start_seg n_segs_p1];
+
 [~,end_seg_I]           = histc(raw_obj__seg_id__sorted,seg_bounds);
 
 end_segments__sorted    = I_new_obj_end_seg(end_seg_I);

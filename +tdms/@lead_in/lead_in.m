@@ -14,28 +14,39 @@ classdef lead_in < handle
     %   way too slow so instead more processing was done in this code and
     %   this class thus provides a summary of ALL lead ins, not just a
     %   single one.
-    %
-    %   TODO
-    %   ===================================================================
-    %   1) Only reading from .tdms_index files is currently supported
-    %
     
     %INPUTS TO CLASS ======================================================
     properties (Hidden)
-        fid                 %Reference to fid of open file
-        reading_index_file  %true when reading from index file, false indicates
-        %we are reading from the data file
+        
+        fid                 %Matlab file id reference to open file
+        
+        file_open  = false  %Boolean to know if file is still open
+                    %Could check "fid" but this might not belong to
+                    %the class anymore
+        is_index_only       %indicates that the filename passed in was the index file
+    end
+    
+    properties
+       filepath_input %Filepath of TDMS file or index specified by user
+       reading_index_file  %True when reading from index file, false 
+        %indicates we are reading from the data file.
+        
+       index_vs_data_reason %Property that briefly describes in text reason
+       %for reading meta data from index file or full data file
+    end
+    
+    properties (Hidden)
         options_obj         %Class: tdms.lead_in
-        first_word          %first four bytes of each lead in, this varies 
+        first_word          %First four bytes of each lead in, this varies 
         %depending on whether you are reading the index file or the data
         %file.
         
         toc_masks       %instructions for each segment
     end
-    
+ 
     properties (Dependent)
         %FLAGS
-        %--------------------------------
+        %------------------------------------------------------------------
         has_meta_data
         new_obj_list    %Whether or not to reset the read order for objects
         has_raw_data    
@@ -84,25 +95,54 @@ classdef lead_in < handle
             obj.fid                = meta_obj.fid;
             obj.reading_index_file = meta_obj.reading_index_file;
             
-            getFirstWord(obj)
+            populateFirstWord(obj)
             
             if obj.reading_index_file
+                %tdms.lead_in.readLeadInFromIndexFile
                 readLeadInFromIndexFile(obj)
             else
-                error('Unhandled case')
+                readLeadInFromDataFile(obj)
             end
 
             checkTocMask(obj)
         end
         function checkTocMask(obj)
+           %checkTocMask
+           %
+           %    checkTocMask(obj)
+           %
+           %    Checks the toc mask for flags which will currently cause
+           %    problems.
+           
            if any(obj.is_big_endian)
-               
+              tdms.error('e001__bigEndian',...
+                  'Currently reading of files with big endian ordering is unsupported') 
            end
            if any(obj.has_raw_daqmx)
                
            end
         end
-        function getFirstWord(obj)
+        function populateRawDataStarts(obj,meta_lengths,seg_lengths)
+           %populateRawDataStarts Populates .data_starts property
+           %
+           %    populateRawDataStarts(obj,meta_lengths,seg_lengths)
+           %    
+           %    meta_lengths - length of the meta data in bytes for each segment
+           %    seg_lengths  - length of meta data & raw data in bytes "  "
+           %
+           %    NOTE: Each meta/raw data section is proceeded by a 28 byte length lead in
+
+           %Raw Data Starts
+           %---------------------------------------------------------------
+           %1 - 28*1 + 0                + meta(1)
+           %2 - 28*2 + seg_lengths(1)   + meta(2)
+           %3 - 28*3 + seg_lengths(1:2) + meta(3)
+           
+           seg_lengths_shifted = [0 seg_lengths(1:end-1)];
+           obj.data_starts = cumsum(28 + seg_lengths_shifted) + meta_lengths; 
+           
+        end
+        function populateFirstWord(obj)
             if obj.reading_index_file
                 obj.first_word = typecast(uint8('TDSh'),'uint32');
             else

@@ -1,10 +1,17 @@
 function populateObject(obj)
 %
 %   At this point we loop through the meta data extracting all of the
-%   information that is contained in it. We will need to process it further
-%   after this but the use of the raw meta data from the initial read will
-%   no longer be needed. After this everything is in specific variables as
-%   specified in the raw_meta object.
+%   information that is contained in it. This includes the names of all 
+%   objects, whether or not they have data, how much data they have, and
+%   whether or not they have properties and their values.
+%   
+%   We will need to process this information further after this but the use
+%   of the raw meta data from the initial read will no longer be needed.
+%   After this everything is in specific variables as specified in this
+%   object.
+%
+%   FULL PATH:
+%       tdms.meta.raw.populateObject
 
 %MLINT
 %======================================
@@ -25,6 +32,9 @@ raw_obj__idx_data = zeros(6,INIT_OBJ_SIZE,'uint32'); %The contents of the idx da
 %NOTE: not all of this is uint32, some are uint64 
 %We expect at most to have 28 bytes, of which 4 we will ignore as those go
 %into obj_len, this leaves 24 bytes, which with uint32 is 6 values
+%Design Decision: Instead of parsing the index data in every read, we put
+%it into a matrix and then extract the values at the end
+
 cur_obj_index = 0;                     
 
 %PROPERTY HANDLING
@@ -133,9 +143,10 @@ obj.raw_obj__has_raw_data = obj.raw_obj__idx_len ~= MAX_INT;
 obj.n_raw_objs = cur_obj_index;
 
 %Parsing of the idx_data
-%-----------------------------------------------------------
+%--------------------------------------------------------------------------
 obj.raw_obj__data_types        = raw_obj__idx_data(1,1:cur_obj_index);
-%NOTE: Ignoring dimension - row 2, for now ...
+%NOTE: We are ignoring the dimension, row 2, for now, as this is currently
+%always 1
 obj.raw_obj__n_values_per_read = double(typecastC(raw_obj__idx_data(3:4,1:cur_obj_index),'uint64'))';
 obj.raw_obj__n_bytes_per_read  = double(typecastC(raw_obj__idx_data(5:6,1:cur_obj_index),'uint64'))';
 %NOTE: raw_obj__n_bytes_per_read is currently only for strings. We could
@@ -144,6 +155,8 @@ obj.raw_obj__n_bytes_per_read  = double(typecastC(raw_obj__idx_data(5:6,1:cur_ob
 %to resolve this first, then we can make this property accurate for all
 %entries.
 
+%Property populating
+%--------------------------------------------------------------------------
 obj.n_props           = cur_prop_index;
 obj.prop__names       = prop__names(1:cur_prop_index);
 obj.prop__values      = prop__values(1:cur_prop_index);
@@ -154,6 +167,11 @@ obj.prop__types       = prop__types(1:cur_prop_index);
 end
 
 function cur_uint32_seg_data = get_uint32_data(cur_seg_meta_data)
+%
+%   JAH TODO: Document this function
+%
+%
+%
 n_1 = floor(0.25*length(cur_seg_meta_data));
 n_2 = floor(0.25*(length(cur_seg_meta_data)-1));
 n_3 = floor(0.25*(length(cur_seg_meta_data)-2));

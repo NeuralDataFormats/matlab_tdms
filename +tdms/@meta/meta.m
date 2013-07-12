@@ -1,5 +1,9 @@
 classdef meta < handle_light
     %
+    %   Class: tdms.meta
+    %
+    %   This class can be called directly for testing purposes.
+    %   
     %   Class Access:
     %   -------------------------------------------------
     %   obj = meta(filepath, *options_in)
@@ -35,14 +39,7 @@ classdef meta < handle_light
         props        %Class tdms.props
     end
     
-    properties
-        fid                 %Matlab file id reference to open file
-        file_open  = false  %Boolean to know if file is still open
-                            %Could check "fid" but this might not belong to
-                            %the class anymore
-        is_index_only       %indicates that the filename passed in was the index file
-        reading_index_file  %property that indicates if fid represents index file or data file
-    end
+
     
     properties (Constant,Hidden)
        TDMS_INDEX_FILE_EXTENSION = '.tdms_index';
@@ -66,11 +63,20 @@ classdef meta < handle_light
                obj.options_obj = options_in;
            end
               
+           
+           obj.filepath_input = filepath;
+           
            %tmds.meta.open_file
            open_file(obj,filepath);
            
+           %Step 1: Processing of the lead ins and extraction of meta data to memory
+           %--------------------------------------------------------------------------
+           obj.lead_in = tdms.lead_in(filepath,obj.options_obj);
+
            %tdms.meta.readMeta
-           readMeta(obj)
+           processMeta(obj)
+           
+           closeFID(obj)
         end
     end
     
@@ -83,12 +89,11 @@ classdef meta < handle_light
         function closeFID(obj)
            %closeFID 
            %
-           %    This method helps us know if 
-           %
            %    See Also:
            %        tdms.meta.open_file
            
            fclose(obj.fid);
+           obj.fid = -1;
            obj.file_open = false;
         end
     end

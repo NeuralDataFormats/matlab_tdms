@@ -11,7 +11,12 @@ classdef options
     
     %META OPTIONS ==============================================
     properties
-       meta_USE_INDEX
+       meta__USE_INDEX      = true       %tdms.meta.open_file
+       %By default we will use an index file to parse meta data if it is
+       %present in the same directory as the data file. If this is false,
+       %then the parser will use the data file to extract meta information
+       %if given the data file as an input. If given the index file as an
+       %input, this property is ignored.
     end
     
     %RAW_OBJ OPTIONS ===========================================

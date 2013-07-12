@@ -10,7 +10,8 @@ function fixNInfo(obj)
 %   This function:
 %   =======================================================================
 %   1) Corrects n_values_per_read_final
-%   2) Populates n_bytes_per_read_final for all data types, not just 
+%   2) Populates n_bytes_per_read_final for all data types, not just
+%      strings
 %   3) Checks that the data type of an object does not change
 %   4) Ensures that all objects have a previous specification if the
 %      instructions specify to use a previous specification
@@ -24,8 +25,8 @@ function fixNInfo(obj)
 %   Class: tdms.meta.fixed
 
 %Object properties for quicker reference
-final_ids_obj = obj.parent.final_ids;
-final_obj_id  = final_ids_obj.final_obj_id;
+final_ids_obj = obj.parent.final_ids;           %Class: tdms.meta.final_id
+final_obj_id  = final_ids_obj.final_obj_id; 
 n_unique_objs = final_ids_obj.n_unique_objs;
 
 %For Reference
@@ -36,7 +37,9 @@ raw_obj__data_types = raw_meta_obj.raw_obj__data_types;
 
 %Intermediate variables to assist processing 
 %------------------------------------------------------------------
-final_obj__set          = zeros(1,n_unique_objs);
+final_obj__set          = false(1,n_unique_objs); %Whether or not
+%we have instructions on what type of data the object contains.
+
 final_obj__data_type    = zeros(1,n_unique_objs);
 final_obj__cur_n_values = zeros(1,n_unique_objs);
 final_obj__cur_n_bytes  = zeros(1,n_unique_objs);
@@ -49,11 +52,15 @@ final_obj__cur_n_bytes  = zeros(1,n_unique_objs);
 n_values_per_read_fixed = raw_meta_obj.raw_obj__n_values_per_read;
 n_bytes_per_read_fixed  = raw_meta_obj.raw_obj__n_bytes_per_read;
 
-%NOTE: Often there are no zeros. I could write a separte case which
-%only does the previous value checking ...
+
+%Update these variables to handle the "previous" instruction
+%==========================================================================
+%NOTE: Often there are no zeros. I could write a separate case which
+%only does the data type checking ...
+%(Optimization, LOW PRIORITY)
 for iRaw = find(raw_meta_obj.raw_obj__has_raw_data)
     cur_final_id = final_obj_id(iRaw);
-    if raw_obj__idx_len(iRaw) == 0
+    if raw_obj__idx_len(iRaw) == 0  %Use previous -------------------------
         if final_obj__set(cur_final_id)
             n_values_per_read_fixed(iRaw) = final_obj__cur_n_values(cur_final_id);
             n_bytes_per_read_fixed(iRaw)  = final_obj__cur_n_bytes(cur_final_id);
@@ -61,7 +68,7 @@ for iRaw = find(raw_meta_obj.raw_obj__has_raw_data)
             %TODO: Provide reference to some error code, improve msg
             error('Channel data info has yet to be set')
         end
-    else
+    else  %Update instructions --------------------------------------------
         final_obj__cur_n_values(cur_final_id) = n_values_per_read_fixed(iRaw);
         final_obj__cur_n_bytes(cur_final_id)  = n_bytes_per_read_fixed(iRaw);
         if final_obj__set(cur_final_id)
@@ -77,15 +84,25 @@ for iRaw = find(raw_meta_obj.raw_obj__has_raw_data)
 end
 
 %Update bytes per read for non-string types
-%--------------------------------------------------------
-data_types_final = final_obj__data_type(final_obj_id);
+%--------------------------------------------------------------------------
+data_types_final = final_obj__data_type(final_obj_id); %This gives us final
+%data types on the same scale as the raw object specification (i.e. size is
+%[1 x raw] NOT [1 x final]
+
 update_mask      = n_bytes_per_read_fixed == 0 & n_values_per_read_fixed ~= 0;
-n_bytes_by_type  = tdms.meta.getNBytesByTypeArray;
+%Update if the # of bytes per read is zero, which it will be for
+%non-numeric types, as well as non-data objects, AND if we have data for
+%that channel
 
-%TODO: Make multiple assignments here
+n_bytes_by_type  = tdms.meta.getNBytesByTypeArray; %Static method call
 
-n_bytes_per_read_fixed(update_mask) = n_bytes_by_type(data_types_final(update_mask))...
-    .*n_values_per_read_fixed(update_mask);
+n_bytes_per_read_fixed(update_mask) = ...
+    n_bytes_by_type(data_types_final(update_mask))...  %bytes per element
+    .*n_values_per_read_fixed(update_mask);            %# elements
+
+%NOTE: # of values is set for both strings and non-string types so we
+%don't need to update the property 'n_values_per_read_fixed' other than
+%handling the previous instructions
 
 %Final assignment
 %--------------------------------------------------------

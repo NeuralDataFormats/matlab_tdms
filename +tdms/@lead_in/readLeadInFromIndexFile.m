@@ -6,16 +6,19 @@ function readLeadInFromIndexFile(obj)
 %   TODO: Finish up this code
 %
 %   IMPROVEMENTS
-%   =========================================
+%   =======================================================================
 %   1) Might convert to using uint32 as the default
 %   2) Need to handle unclosed files
 %   3) Move to using input options
 %   4) change 28 to variable name
 %
 %   ASSUMPTIONS
-%   =========================================
-%   Double works fine for index, instead of uint64
+%   ======================================================================
+%   Double works fine for byte indexing, instead of uint64
 %       TODO: Add check for double overflow
+%
+%   FULL PATH:
+%       tdms.lead_in.readLeadInFromIndexFile
 
 %Create local reference, property access is really slow
 GROWTH_SIZE = obj.options_obj.lead_in_GROWTH_SIZE;
@@ -23,6 +26,8 @@ GROWTH_SIZE = obj.options_obj.lead_in_GROWTH_SIZE;
 %Read all data in at once ...
 fid = obj.fid;
 all_meta_data_u8 = fread(fid,[1 Inf],'*uint8'); 
+
+%TODO: Move this out of here ...
 fclose(fid);
 
 %Approach: Assume everything is good, then 
@@ -33,9 +38,9 @@ fclose(fid);
 %NOTE: For typecasting we must have data grow in columns
 %or transpose later ...
 lead_in_data = zeros(28,obj.options_obj.lead_in_INIT_SIZE,'uint8');
-nextIndex = 1;
-nsegs = 0;
-eofPosition = length(all_meta_data_u8);
+nextIndex    = 1;
+nsegs        = 0;
+eofPosition  = length(all_meta_data_u8);
 
 %LOOP 
 %---------------------------------------------------
@@ -48,9 +53,6 @@ try
        if nsegs > size(lead_in_data,2)
            lead_in_data = [lead_in_data zeros(28,GROWTH_SIZE,'uint8')]; %#ok<AGROW>
        end
-
-       %TODO: If this ever goes wrong we need to go back and retroactively 
-       %check the lead in flags ...
 
        lead_in_data(:,nsegs) = all_meta_data_u8(nextIndex:nextIndex+27);
        nextIndex    = nextIndex + 20;
@@ -66,27 +68,18 @@ catch ME
    rethrow(ME)
 end
 
-    
-%NOW: 
-%Starts are at lead_in_start
-
 lead_in_data(:,nsegs+1:end) = []; %truncate overly allocated data
 lead_in_flags = typecastC(lead_in_data(1:4,:),'uint32');
 
-
-%TODO: Make this a function, place in CATCH as well
 I_bad = find(lead_in_flags ~= obj.first_word,1);
 if ~isempty(I_bad)
-    error('Case not yet supported')
+    error('Invalid lead in detected, handling not yet supported ...')
 end
 
-obj.toc_masks     = typecastC(lead_in_data(5:8,:),'uint32');
-
-%skip version number for now
+%We'll skip version # for now (9:12 => uint32)
 
 seg_lengths   = double(typecastC(lead_in_data(13:20,:),'uint64'))';
 meta_lengths  = double(typecastC(lead_in_data(21:28,:),'uint64'))';
-
 
 %- All meta_starts are separated from each other by the lead in length (28)
 %plus the meta_lengths of their neighbors
@@ -94,19 +87,20 @@ meta_lengths  = double(typecastC(lead_in_data(21:28,:),'uint64'))';
 %(for 1 based indexing)
 %- NOTE: The 28 is within the cumsum, not outside of it
 meta_starts       = 29 + [0 cumsum(meta_lengths(1:end-1) + 28)];
-obj.data_lengths  = seg_lengths - meta_lengths;
-obj.data_starts   = meta_starts + meta_lengths;
 
-%TODO: Might experiment with linear vector reading as it would lessen
-%the typecast time, unfortunately it makes things a lot more difficult 
-%to interpret up front
 meta_data = cell(1,nsegs);
-%TODO: Try meta ends for speed ...
 for iSeg = 1:nsegs
    meta_data{iSeg} = all_meta_data_u8(meta_starts(iSeg):meta_starts(iSeg) - 1 + meta_lengths(iSeg));
 end
 
-obj.n_segs      = nsegs;
-obj.meta_data   = meta_data;
+%Final Property Assignment
+%----------------------------------------------------------------
+obj.data_lengths  = seg_lengths - meta_lengths;
+
+populateRawDataStarts(obj,meta_lengths,seg_lengths)
+
+obj.toc_masks     = typecastC(lead_in_data(5:8,:),'uint32');
+obj.n_segs        = nsegs;
+obj.meta_data     = meta_data;
 
 end

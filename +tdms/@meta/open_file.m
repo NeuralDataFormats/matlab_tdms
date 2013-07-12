@@ -3,16 +3,8 @@ function open_file(obj,filepath)
 %
 %   open_file(obj,filepath)
 %
-%   IMPROVEMENT
-%   ======================================================
-%   1) Allow throwing a warning by default or not if the index file
-%   is not present for reading from
-%
-%   POPULATES:
-%   ======================================================
-%   .is_index_only
-%   .fid 
-%   .reading_index_file
+%   FULL PATH:
+%       tdms.meta.open_file
 
 options_obj = obj.options_obj;
 
@@ -30,18 +22,22 @@ obj.is_index_only = strcmp(fileExt,obj.TDMS_INDEX_FILE_EXTENSION);
 %------------------------------------------------------------------
 if obj.is_index_only
     obj.reading_index_file = true;
-elseif options_obj.meta_USE_INDEX
+    obj.index_vs_data_reason = 'Specified filepath is index, not data file';
+elseif options_obj.meta__USE_INDEX
     %switch from tdms to tmds index file extension
     index_filepath = fullfile(tdmsPathToFile,[tdmsNameOnly obj.TDMS_INDEX_FILE_EXTENSION]);
     if exist(index_filepath,'file')
         %NOTE: Could throw warning if it doesn't exist ...
         filepath = index_filepath;
         obj.reading_index_file = true;
+        obj.index_vs_data_reason = 'Matching index file exists for specified file';
     else
         obj.reading_index_file = false;
+        obj.index_vs_data_reason = 'Corresponding index file missing, using data file';
     end
 else
     obj.reading_index_file = false;
+    obj.index_vs_data_reason = 'Option ''meta_USE_INDEX'' is false';
 end
 
 %Check for file existence and open

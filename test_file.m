@@ -1,3 +1,5 @@
+BASE_PATH = 'C:\Users\RNEL\Desktop\tdms_test_files';
+
 %file_path = 'Z:\RAWDATA\2010\02182010 - Quadzilla\kinematicsPS\006_Block-021.tdms';
 %file_path = 'C:\Users\RNEL\Desktop\TDMSproblems\Demo3.tdms_index';
 %file_path = 'C:\D\JimProjects\forFEX_Backups\tdms2\fromOthers\Voltage1.tdms_index';
@@ -5,7 +7,8 @@
 %file_path = 'L:\TDT_Controller\Modules\Robot\Matt Robot Stuff\Robocat\002FakeRobotData.tdms';
 %file_path = 'C:\Users\RNEL\Desktop\online_example\example_NI.tdms';
 %file_path = 'L:\TDT_Controller\Modules\Robot\Matt Robot Stuff\Robocat\001TempBlk000.tdms_index';
-file_path = 'Z:\RAWDATA\2012\06052012 - Aht\ENG\0001_Block-171.tdms_index';
+file_path = fullfile(BASE_PATH,'068_Block-052.tdms');
+file_path = fullfile(BASE_PATH,'test123_12-11-06_1647_001.tdms');
 % profile on
 
 %NOTE: Apparently root and group objects may be missing ...
