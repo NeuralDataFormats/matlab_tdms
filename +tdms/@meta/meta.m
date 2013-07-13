@@ -29,6 +29,14 @@ classdef meta < handle_light
         options_obj  %Class tdms.options
     end
     
+    properties
+       filepath_input
+       is_index_only   %Indicates that only an index file was passed in
+       %for the file_path.
+       reading_index_file %Indicates that we are parsing an index file, 
+       %not a data file.
+    end
+    
     properties        
         lead_in      %Class tdms.lead_in
         raw_meta     %Class tdms.meta.raw
