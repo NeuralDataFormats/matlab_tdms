@@ -6,7 +6,7 @@ function open_file(obj,filepath)
 %   FULL PATH:
 %       tdms.meta.open_file
 
-options_obj = obj.options_obj;
+options_local = obj.options;
 
 [tdmsPathToFile,tdmsNameOnly,fileExt] = fileparts(filepath);
 obj.is_index_only = strcmp(fileExt,obj.TDMS_INDEX_FILE_EXTENSION);
@@ -23,7 +23,7 @@ obj.is_index_only = strcmp(fileExt,obj.TDMS_INDEX_FILE_EXTENSION);
 if obj.is_index_only
     obj.reading_index_file = true;
     obj.index_vs_data_reason = 'Specified filepath is index, not data file';
-elseif options_obj.meta__USE_INDEX
+elseif options_local.meta__USE_INDEX
     %switch from tdms to tmds index file extension
     index_filepath = fullfile(tdmsPathToFile,[tdmsNameOnly obj.TDMS_INDEX_FILE_EXTENSION]);
     if exist(index_filepath,'file')

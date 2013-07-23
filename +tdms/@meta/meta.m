@@ -26,15 +26,19 @@ classdef meta < handle_light
     
     %OPTIONS  ===================================================
     properties
-        options_obj  %Class tdms.options
+        options %Class tdms.options
     end
     
     properties
+       fid
+       file_open = false
        filepath_input
        is_index_only   %Indicates that only an index file was passed in
        %for the file_path.
        reading_index_file %Indicates that we are parsing an index file, 
        %not a data file.
+       index_vs_data_reason %Property that briefly describes in text reason
+       %for reading meta data from index file or full data file
     end
     
     properties        
@@ -46,9 +50,7 @@ classdef meta < handle_light
         
         props        %Class tdms.props
     end
-    
 
-    
     properties (Constant,Hidden)
        TDMS_INDEX_FILE_EXTENSION = '.tdms_index';
        TDMS_FILE_EXTENSION       = '.tdms';
@@ -59,32 +61,36 @@ classdef meta < handle_light
     end
         
     methods
-        function obj = meta(filepath,options_in)
+        function obj = meta(file_path,options_in)
            %meta
            %
            %    obj = meta(filepath,options_in)
            %
 
            if nargin == 1
-               obj.options_obj = tdms.options;
+               obj.options = tdms.options;
            else
-               obj.options_obj = options_in;
+               obj.options = options_in;
            end
-              
            
-           obj.filepath_input = filepath;
+           obj.filepath_input = file_path;
            
-           %tmds.meta.open_file
-           open_file(obj,filepath);
+           %tdms.meta.open_file
+           obj.open_file(file_path);
            
            %Step 1: Processing of the lead ins and extraction of meta data to memory
            %--------------------------------------------------------------------------
-           obj.lead_in = tdms.lead_in(filepath,obj.options_obj);
+           obj.lead_in = tdms.lead_in(...
+               obj.options,...
+               obj.fid,...
+               obj.reading_index_file);
 
-           %tdms.meta.readMeta
-           processMeta(obj)
+           return
            
-           closeFID(obj)
+           %tdms.meta.processMeta
+           obj.processMeta();
+           
+           obj.closeFID();
         end
     end
     

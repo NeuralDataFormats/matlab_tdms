@@ -11,6 +11,8 @@ file_path = fullfile(BASE_PATH,'068_Block-052.tdms');
 file_path = fullfile(BASE_PATH,'test123_12-11-06_1647_001.tdms');
 % profile on
 
+file_path = 'C:\D\Projects\tdms\data_2013_07_19_4.tdms';
+
 %NOTE: Apparently root and group objects may be missing ...
 
 % tic
