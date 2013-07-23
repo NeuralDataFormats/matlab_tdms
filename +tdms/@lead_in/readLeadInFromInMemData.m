@@ -22,40 +22,39 @@ INIT_SIZE   = options.lead_in_init_size;
 lead_in_data  = zeros(28,INIT_SIZE,'uint8');
 n_segs_p1     = 1;
 invalid_segment_found = false;
-next_index    = 1;
+next_index    = 13;
 %-----------------------------------------------------
 
 eof_position = length(in_mem_data);
 
 %LOOP - Grab lead in data
 %---------------------------------------------------
-
-seg_starts = zeros(1,INIT_SIZE);
-done = false;
-while next_index <= eof_position
-    %??? Is it possible to get rid of the if statement
-    %and the plus statement?
-    %Some for loop ...
-    n_segs_p1 = n_segs_p1 + 1;
-
-    if n_segs_p1 > length(seg_starts);
-        seg_starts = [seg_starts zeros(1,GROWTH_SIZE)]; %#ok<AGROW>
+%5.5 seconds
+try
+    seg_starts = zeros(1,INIT_SIZE);
+    while next_index <= eof_position
+        %??? Is it possible to get rid of the if statement
+        %and the plus statement?
+        %Some for loop ...
+        n_segs_p1 = n_segs_p1 + 1;
+        
+        if n_segs_p1 > length(seg_starts);
+            seg_starts = [seg_starts zeros(1,GROWTH_SIZE)]; %#ok<AGROW>
+        end
+        
+        next_index = next_index + double(typecast(in_mem_data(next_index:next_index+7),'uint64')) + 28;
+        %next_index = next_index + double(typecast(in_mem_data(next_index+12:next_index+19),'uint64')) + 28;
+        seg_starts(n_segs_p1) = next_index;
     end
-
-    try
-        seg_starts(n_segs_p1) = next_index + double(typecast(in_mem_data(next_index+12:next_index+19),'uint64')) + 28;
-        next_index = seg_starts(n_segs_p1);
-    catch ME
-        %Then we most likely got an error from improperly parsing
-        %the length data and exceeding the limits of the data
-        %array we are indexing into ...
-    end
-    
+    n_segs = n_segs_p1 - 1;
+catch ME
+    %Then we most likely got an error from improperly parsing
+    %the length data and exceeding the limits of the data
+    %array we are indexing into ... 
 end
-n_segs = n_segs_p1 - 1;
 
 %Grab lead in data
-
+%463794 - n_segs
 return
 
 lead_in_flag_u8 = zeros(n_segs,4,'uint8')
@@ -63,12 +62,12 @@ lead_in_flag_u8 = zeros(n_segs,4,'uint8')
 % try
 %     while next_index <= eof_position
 %         n_segs = n_segs + 1;
-%         
+%
 %         %Expand data if necessary
 %         if n_segs > size(lead_in_data,2)
 %             lead_in_data = [lead_in_data zeros(28,GROWTH_SIZE,'uint8')]; %#ok<AGROW>
 %         end
-%         
+%
 %         lead_in_data(:,n_segs) = in_mem_data(next_index:next_index+27);
 %         seg_length = double(typecast(lead_in_data(13:20,n_segs),'uint64'));
 %         next_index = next_index + 28 + seg_length;
