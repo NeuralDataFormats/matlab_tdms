@@ -1,4 +1,4 @@
-classdef raw < handle
+classdef raw < tdms.sl.obj.handle_light
     %
     %   Class: tdms.meta.raw
     %
@@ -15,9 +15,9 @@ classdef raw < handle
     %   tdms.meta.raw.populateObject
     
     properties
-        parent       %Class: tdms.meta
-        options_obj  %Class: tdms.
-        lead_in      %Class: tdms.lead_in
+        parent      %Class: tdms.meta
+        options     %Class: tdms.options
+        lead_in     %Class: tdms.lead_in
     end
     
     properties
@@ -42,8 +42,8 @@ classdef raw < handle
         %i.e. the following few raw_obj variables are computed
         %based on the above properties
         raw_obj__has_raw_data %obj.raw_obj__idx_len ~= MAX_INT
-        %IMPORTANTLY: This being true doesn't guarantee that the object 
-        %actually has data. Some writers may specify that raw data is prsent
+        %IMPORTANTLY: This being true doesn't guarantee that the object
+        %actually has data. Some writers may specify that raw data is present
         %but that the # of values present in the segment for that object is 0
     end
     
@@ -60,7 +60,7 @@ classdef raw < handle
     properties
         %Length is by all props across all objects
         %In other words, we have not paired the information down to being
-        %on a per object basis
+        %on a per object basis. ??? Have we filtered properties?
         %-------------------------------------------------------------------
         n_props
         prop__names      %names, CHAR, NOT UNICODE
@@ -73,11 +73,19 @@ classdef raw < handle
     
     methods
         function obj = raw(meta_obj)
-            obj.parent      = meta_obj;
-            obj.options_obj = meta_obj.options_obj;
-            obj.lead_in     = meta_obj.lead_in;
+            %
+            %   obj = tdms.meta.raw(meta_obj)
+            %
+            %   Inputs:
+            %   -------
+            %   meta_obj : tdms.meta
+            %
+            obj.parent  = meta_obj;
+            obj.options = meta_obj.options;
+            obj.lead_in = meta_obj.lead_in;
             
-            populateObject(obj)
+            %tdms.meta.raw.populateObject
+            obj.populateObject();
         end
     end
     

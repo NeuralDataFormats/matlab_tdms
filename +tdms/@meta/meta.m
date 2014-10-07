@@ -1,19 +1,21 @@
-classdef meta < handle_light
+classdef meta < tdms.sl.obj.handle_light
     %
-    %   Class: tdms.meta
+    %   Class: 
+    %   tdms.meta
     %
     %   This class can be called directly for testing purposes.
     %   
     %   Class Access:
-    %   -------------------------------------------------
+    %   -------------
     %   obj = meta(filepath, *options_in)
     %
-    %   INPUTS:
-    %       filepath - Path to tdms file or tdms_index file.
-    %       options  - Class: tdms.options
+    %   Inputs:
+    %   -------
+    %   filepath - Path to tdms file or tdms_index file.
+    %   options  - Class: tdms.options
     %
-    %   IMPORTANT METHODS
-    %   -------------------------------------------------
+    %   Important Methods:
+    %   ------------------
     %   tdms.meta.open_file
     %   tdms.meta.readMeta
     
@@ -60,12 +62,24 @@ classdef meta < handle_light
        MACHINE_FORMAT            = 'ieee-le'
     end
         
+    methods (Static)
+        function test(file_path,options_in)
+           if exist('options_in','var')
+               tdms.meta(file_path,options_in);
+           else
+               tdms.meta(file_path);
+           end
+        end
+    end
     methods
         function obj = meta(file_path,options_in)
            %meta
            %
-           %    obj = meta(filepath,options_in)
+           %    obj = tdms.meta(file_path,options_in)
            %
+           %    Inputs:
+           %    -------
+           %    file_path
 
            if nargin == 1
                obj.options = tdms.options;
@@ -84,8 +98,6 @@ classdef meta < handle_light
                obj.options,...
                obj.fid,...
                obj.reading_index_file);
-
-           return
            
            %tdms.meta.processMeta
            obj.processMeta();

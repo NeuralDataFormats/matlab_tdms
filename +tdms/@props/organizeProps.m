@@ -1,6 +1,8 @@
 function organizeProps(obj)
 %
+%   tdms.props.organizeProps
 %
+%   TODO: This function needs documentation
 
 %INPUTS NEEDED
 %===============================================

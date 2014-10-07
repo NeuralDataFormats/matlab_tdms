@@ -13,9 +13,10 @@ classdef fixed < handle
     %   raw_obj__idx_len = 0 (tdms.meta.raw). This class respecifies this
     %   information, specifically the # of bytes and # of values to read
     %   for each object. In addition, the # of bytes was previously only
-    %   specified for strings, where the the # of values doesn't also
-    %   specify the # of bytes. For easier access we populate # of bytes
-    %   for all data types as this will be needed later on for processing
+    %   specified for strings. This is done by NI, since the # of bytes 
+    %   for other data types is inherit to the data type -> i.e. double = 8).For 
+    %   easier access we populate # of bytes for all data types as this 
+    %   will be needed later on for processing
     %   read instrutions and is a simple indexing step.
     %
     %   2) During writing, each segment does not specify the raw data that

@@ -1,5 +1,7 @@
 classdef props < handle
     %
+    %   Class:
+    %   tdms.props
     
     properties
        parent
@@ -17,8 +19,12 @@ classdef props < handle
     end
     
     methods (Static)
-       fread_prop_info = get_prop_fread_functions
-       fread_prop_info = get_prop_fread_functions2
+       %tdms.props.get_prop_fread_functions
+       fread_prop_info = get_prop_fread_functions()
+       
+       %This isn't being used. I'm not sure why I had this ..
+       %Perhaps I wanted to allow passing in non-string values ...
+       fread_prop_info = get_prop_fread_functions2()
     end
     
     methods

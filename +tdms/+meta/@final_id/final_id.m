@@ -9,6 +9,7 @@ classdef final_id < handle
         parent %Class: tdms.meta
     end
     
+    
     properties
         %I think these are temporary variables and should be removed
         
@@ -51,7 +52,7 @@ classdef final_id < handle
             obj.parent = meta_obj;
             
             %tdms.meta.final_id.createFinalIDInfo
-            createFinalIDInfo(obj)
+            obj.createFinalIDInfo();
         end
     end
     

@@ -1,4 +1,4 @@
-BASE_PATH = 'C:\Users\RNEL\Desktop\tdms_test_files';
+BASE_PATH = 'F:\Projects\matlab\tdms';
 
 %file_path = 'Z:\RAWDATA\2010\02182010 - Quadzilla\kinematicsPS\006_Block-021.tdms';
 %file_path = 'C:\Users\RNEL\Desktop\TDMSproblems\Demo3.tdms_index';
@@ -11,7 +11,9 @@ file_path = fullfile(BASE_PATH,'068_Block-052.tdms');
 file_path = fullfile(BASE_PATH,'test123_12-11-06_1647_001.tdms');
 % profile on
 
-file_path = 'C:\D\Projects\tdms\data_2013_07_19_4.tdms';
+file_path = fullfile(BASE_PATH,'data_2013_07_19_4.tdms');
+
+%file_path = 'C:\D\Projects\tdms\data_2013_07_19_4.tdms';
 
 %NOTE: Apparently root and group objects may be missing ...
 

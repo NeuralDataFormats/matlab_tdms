@@ -1,7 +1,10 @@
 function fread_prop_info = get_prop_fread_functions()
 %
+%   fread_prop_info = tdms.props.get_prop_fread_functions()
 %
-%   Static Method
+%
+%   All inputs take string inputs as data ...
+
 
 fread_prop_info       = cell(1,68);
 fread_prop_info(1:10) = {@readInt8 @readInt16 @readInt32 @readInt64 @readUint8 @readUint16 @readUint32 @readUint64 @readSingle @readDouble};
@@ -14,22 +17,22 @@ end
 
 
 function [out,cur_index] = readInt8(str,cur_index)
-out = typecast(str(cur_index+1),'int8');
+out = typecast(str(cur_index),'int8');
 cur_index = cur_index + 1;
 end
 
 function [out,cur_index] = readInt16(str,cur_index)
-out = typecast(str((cur_index+1):(cur_index+2)),'int16');
+out = typecast(str((cur_index):(cur_index+1)),'int16');
 cur_index = cur_index + 2;
 end
 
 function [out,cur_index] = readInt32(str,cur_index)
-out = typecast(str((cur_index+1):(cur_index+4)),'int32');
+out = typecast(str((cur_index):(cur_index+3)),'int32');
 cur_index = cur_index + 4;
 end
 
 function [out,cur_index] = readInt64(str,cur_index)
-out = typecast(str((cur_index+1):(cur_index+8)),'int64');
+out = typecast(str((cur_index):(cur_index+7)),'int64');
 cur_index = cur_index + 8;
 end
 
@@ -39,27 +42,27 @@ cur_index = cur_index + 1;
 end
 
 function [out,cur_index] = readUint16(str,cur_index)
-out = typecast(str((cur_index+1):(cur_index+2)),'uint16');
+out = typecast(str((cur_index):(cur_index+1)),'uint16');
 cur_index = cur_index + 2;
 end
 
 function [out,cur_index] = readUint32(str,cur_index)
-out = typecast(str((cur_index+1):(cur_index+4)),'uint32');
+out = typecast(str((cur_index):(cur_index+3)),'uint32');
 cur_index = cur_index + 4;
 end
 
 function [out,cur_index] = readUint64(str,cur_index)
-out = typecast(str((cur_index+1):(cur_index+8)),'uint64');
+out = typecast(str((cur_index):(cur_index+7)),'uint64');
 cur_index = cur_index + 8;
 end
 
 function [out,cur_index] = readSingle(str,cur_index)
-out = typecast(str((cur_index+1):(cur_index+4)),'single');
+out = typecast(str((cur_index):(cur_index+3)),'single');
 cur_index = cur_index + 4;
 end
 
 function [out,cur_index] = readDouble(str,cur_index)
-out = typecast(str((cur_index+1):(cur_index+8)),'double');
+out = typecast(str((cur_index):(cur_index+7)),'double');
 cur_index = cur_index + 8;
 end
 
@@ -69,13 +72,13 @@ function [out,cur_index] = readString(str,cur_index)
 
 STR_ENCODING = 'UTF-8';
 [n_bytes,cur_index] = readUint32(str,cur_index);
-out = native2unicode(str(cur_index+1:cur_index+n_bytes),STR_ENCODING);
+out = native2unicode(str(cur_index:cur_index+n_bytes-1),STR_ENCODING);
 cur_index = cur_index + n_bytes;
 
 end
 
 function [out,cur_index] = readLogical(str,cur_index)
-out = logical(str(cur_index+1));
+out = logical(str(cur_index));
 cur_index = cur_index + 1;
 end
 

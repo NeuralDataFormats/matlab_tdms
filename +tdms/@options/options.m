@@ -42,6 +42,7 @@ classdef options
 
     %LEAD IN OPTIONS ===========================================
     properties
+       lead_in_use_strfind_approach = true
        lead_in_init_size    = 20000
        lead_in_growth_size  = 20000 
        %TODO: A Doubling might be more useful ...

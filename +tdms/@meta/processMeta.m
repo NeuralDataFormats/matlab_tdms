@@ -8,6 +8,8 @@ function processMeta(obj)
 %----------------------------------------------
 obj.raw_meta   = tdms.meta.raw(obj);
 
+return
+
 %Step 2: Consolidate objects into final set
 %----------------------------------------------
 obj.final_ids  = tdms.meta.final_id(obj);
