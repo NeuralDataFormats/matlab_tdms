@@ -3,26 +3,38 @@ classdef lead_in < sl.obj.handle_light
     %   Class:
     %   tdms.lead_in
     %
-    %   METHODS
-    %   =======================================
+    %   Methods:
+    %   --------
     %   tdms.lead_in.readLeadInFromIndexFile
     %   tdms.lead_in.readLeadInFromDataFile
+    %   tdms.lead_in.readLeadInFromInMemData
     %
-    %   DESIGN DECISIONS
-    %   ===================================================================
+    %   Design Decisions:
+    %   -----------------
     %   1) Originally the lead in was specifically meant to handle
     %   only the lead in portion of the reading, and not anything
     %   related to the meta data. An array of lead in objects proved to be
     %   way too slow so instead more processing was done in this code and
     %   this class thus provides a summary of ALL lead ins, not just a
     %   single one.
-    
+    %
+    %   It also became important to handle extraction of the raw meta data.
+    %   
+    %
+    %   Lead In Structure:
+    %   ------------------
+    %   See the file "Lead_In_Format_Notes" in the private folder of this
+    %   directory.
     
     properties (Hidden)
         first_word   %(uint32) First four bytes of each lead in, this varies
         %depending on whether you are reading the index file or the data
         %file.
-        toc_masks    %(1 x n_segs) Instructions for each segment. See the flags.
+        %
+        %   See: populateFirstWord()
+        
+        toc_masks %[1 x n_segs], uint32 
+        %Instructions for each segment. See the flags.
     end
     
     %FLAGS  ===============================================================
@@ -42,13 +54,17 @@ classdef lead_in < sl.obj.handle_light
     properties
         d3 = '----    Error Outputs    ----'
         error_in_lead_in = false %If true this indicates
-        error_in_lead_in_reason
+        error_in_lead_in_reason  = ''%string
         %1) - invalid lead in
         %2) - size specification exceeds file size
+        %3) - lead in is too close to end of file
         
         d4 = '----    Normal Outputs    ----'
         n_segs          %# of segments
-        data_starts     %(double, 1 x n_segs) byte index in data file where reading starts
+        data_starts     %(double, 1 x n_segs) byte index in data file where 
+        %reading starts
+        %Call populateRawDataStarts() to set
+        
         data_lengths    %(double, 1 x n_segs) byte lengths of all segments
         
         raw_meta_data   %({1 x n_segs} uint8 array), unprocessed meta data
@@ -93,21 +109,21 @@ classdef lead_in < sl.obj.handle_light
             %   
             %
             
-            %TODO: Consider not holding onto fid, pass into
-            %options
             obj.populateFirstWord(reading_index_file);
             
             if reading_index_file
-                %tdms.lead_in.readLeadInFromIndexFile
-                obj.readLeadInFromIndexFile(options,fid);
+                %tdms.lead_in.readLeadInFromInMemData
+                obj.readLeadInFromInMemData(options,fid);
             else
                 fseek(fid,0,1);
                 eof_position = ftell(fid);
                 fseek(fid,0,-1);
                 
                 if options.meta__data_in_mem_rule == 0
+                    %Never do from memory
                     obj.readLeadInFromDataFile(eof_position,options,fid);
                 elseif options.meta__data_in_mem_rule == 1
+                    %Do in memory based on size
                     n_MB_data = eof_position/1e6;
                     if n_MB_data < options.meta__max_MB_process_data_in_mem
                         obj.readLeadInFromInMemData(options,fid);
@@ -115,6 +131,7 @@ classdef lead_in < sl.obj.handle_light
                         obj.readLeadInFromDataFile(eof_position,options,fid);
                     end
                 else
+                    %Always from memory
                     obj.readLeadInFromInMemData(options,fid);
                 end
             end
@@ -155,6 +172,11 @@ classdef lead_in < sl.obj.handle_light
             
         end
         function populateFirstWord(obj,reading_index_file)
+            %
+            %   Rather than read all letters one at a time, we read the
+            %   full set of characters and do a comparison to the value
+            %   calculated here.
+
             if reading_index_file
                 obj.first_word = typecast(uint8('TDSh'),'uint32');
             else

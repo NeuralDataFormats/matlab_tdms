@@ -79,7 +79,8 @@ classdef meta < tdms.sl.obj.handle_light
            %
            %    Inputs:
            %    -------
-           %    file_path
+           %    file_path : 
+           %    options_in : tdms.options
 
            if nargin == 1
                obj.options = tdms.options;
@@ -92,8 +93,10 @@ classdef meta < tdms.sl.obj.handle_light
            %tdms.meta.open_file
            obj.open_file(file_path);
            
-           %Step 1: Processing of the lead ins and extraction of meta data to memory
-           %--------------------------------------------------------------------------
+           %Step 1:
+           %---------------------------------------------------------------
+           %- processing of lead in
+           %- extraction of meta data to memory
            obj.lead_in = tdms.lead_in(...
                obj.options,...
                obj.fid,...
@@ -125,9 +128,7 @@ classdef meta < tdms.sl.obj.handle_light
     end
     
     methods (Static,Hidden)
-       
        names_out = fixNames(names_in) 
-       
        n_bytes_by_type = getNBytesByTypeArray
     end
     

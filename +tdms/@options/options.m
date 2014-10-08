@@ -3,16 +3,18 @@ classdef options
     %   Class:
     %   tdms.options
     %
+    %   These are any options that are used for general reading. I might 
+    %   place channel specific reading options to other files. In general
+    %   the idea of using this class is to provide a single point of entry
+    %   for changing the behavior of the program.
+    %
     %   IMPROVEMENTS
     %   ========================================================
     %   1) provide an option for cloning based on previous file for
     %   initialization sizes
+    %   2) Improve the display of options
     %
-    
-    %NOTE: I want to put all options in here
-    %set the defaults here, let user pass in overriding options
-    
-    
+
     %ERROR OPTIONS ========================================================
     properties
        read_file_until_error = false %For Labview this is normally true.

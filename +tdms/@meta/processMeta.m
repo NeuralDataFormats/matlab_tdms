@@ -1,8 +1,11 @@
 function processMeta(obj)
 %processMeta
 %
-%   NAME: tdms.meta.processMeta
-
+%   tdms.meta.processMeta
+%
+%   See Also:
+%   tdms.meta.raw
+%
 
 %Step 1: Extract info from meta data
 %----------------------------------------------

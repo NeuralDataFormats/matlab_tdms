@@ -1,5 +1,10 @@
 BASE_PATH = 'F:\Projects\matlab\tdms';
 
+
+file_path = fullfile(BASE_PATH,'data_2013_07_19_4.tdms');
+file_path = fullfile(BASE_PATH,'test1(reshaped).tdms');
+
+
 %file_path = 'Z:\RAWDATA\2010\02182010 - Quadzilla\kinematicsPS\006_Block-021.tdms';
 %file_path = 'C:\Users\RNEL\Desktop\TDMSproblems\Demo3.tdms_index';
 %file_path = 'C:\D\JimProjects\forFEX_Backups\tdms2\fromOthers\Voltage1.tdms_index';
@@ -11,7 +16,7 @@ file_path = fullfile(BASE_PATH,'068_Block-052.tdms');
 file_path = fullfile(BASE_PATH,'test123_12-11-06_1647_001.tdms');
 % profile on
 
-file_path = fullfile(BASE_PATH,'data_2013_07_19_4.tdms');
+
 
 %file_path = 'C:\D\Projects\tdms\data_2013_07_19_4.tdms';
 
@@ -22,11 +27,11 @@ file_path = fullfile(BASE_PATH,'data_2013_07_19_4.tdms');
 % toc
 
 tic
-%profile on
+profile on
 temp = tdms.meta(file_path);
-%profile off
-%profile viewer
+profile off
 toc
+profile viewer
 
 %tic
 %temp2 = TDMS_getStruct(file_path);

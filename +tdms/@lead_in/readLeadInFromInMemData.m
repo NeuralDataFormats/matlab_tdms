@@ -5,23 +5,23 @@ function in_mem_data = readLeadInFromInMemData(obj,options,fid)
 %
 %   See Also:
 %   tdms.lead_in.readLeadInFromDataFile
-%   tdms.lead_in.readLeadInFromIndexFile
 %   tdms.lead_in.readLeadInFromInMemData
 %
 %   IMPROVEMENT NOTES
 %   =======================================================================
 %   1) We could add a check for data consistency
 
+%Yikes, we don't want to read the data here if we don't need to
+%Pass this decision up ...
 in_mem_data = fread(fid,[1 Inf],'*uint8');
 
 if options.lead_in_use_strfind_approach
     %Note, this may only be faster for high segment count data
     %TODO: Add check on length ...
-    helper__useStrfindApproach(obj,options,in_mem_data)
+    h__useStrfindApproach(obj,options,in_mem_data)
     return
 end
 
-error('Unhandled code')
 
 %Code below is not finished ...
 
@@ -94,14 +94,22 @@ obj.raw_meta_data = raw_meta_data;
 
 end
 
-function helper__useStrfindApproach(obj,options,in_mem_data) %#ok<INUSL>
-
-I = strfind(in_mem_data,uint8('TDSm'));
+function h__useStrfindApproach(obj,options,in_mem_data) %#ok<INUSL>
+%
+%   This approach searches for the lead in header in the file.
+%
+%   Inputs:
+%   -------
+%
+start_segment_I = strfind(in_mem_data,uint8('TDSm'));
 
 try
-    seg_lengths = double(sl.io.staggeredU8ToU64(in_mem_data,I+12))';
+    seg_lengths = double(sl.io.staggeredU8ToU64(in_mem_data,start_segment_I+12))';
 catch ME
-    obj.error_in_lead_in_reason = true;
+    obj.error_in_lead_in = true;
+    obj.error_in_lead_in_reason = 'Lead in comes too close to end of file';
+    
+    %NOTE: This can be fixed by a slower check 
     %TODO: Finish this ...
     error('This bit needs to be finished ...')
 end
@@ -109,14 +117,14 @@ end
 %Error Handling
 %--------------------------------------------------------------------------
 %NOTE: If anything causes a problem we'll need to do some truncation ...
-if I(1) ~= 1 || ~isequal(I(1:end-1) + 28 + seg_lengths(1:end-1),I(2:end))
+if start_segment_I(1) ~= 1 || ~isequal(start_segment_I(1:end-1) + 28 + seg_lengths(1:end-1),start_segment_I(2:end))
     %TODO: Handle this ...
     %This code indicates that 'I' has matched extra instances
     %and that some of the I's are not valid and we need to filter them out
     error('JAH TODO: Write this code')
 end
 
-lead_in = double(sl.io.staggeredU8ToU32(in_mem_data,I))';
+lead_in = double(sl.io.staggeredU8ToU32(in_mem_data,start_segment_I))';
 
 I_bad = find(lead_in ~= obj.first_word,1);
 if ~isempty(I_bad)
@@ -128,12 +136,14 @@ end
 
 %Output Population
 %--------------------------------------------------------------------------
-n_segs        = length(I);
+n_segs        = length(start_segment_I);
 obj.n_segs    = n_segs;
-obj.toc_masks = double(sl.io.staggeredU8ToU32(in_mem_data,I+4))';
+obj.toc_masks = double(sl.io.staggeredU8ToU32(in_mem_data,start_segment_I+4))';
 
-meta_lengths     = double(sl.io.staggeredU8ToU32(in_mem_data,I+20))';
-meta_starts      = I + 28;
+meta_lengths     = double(sl.io.staggeredU8ToU32(in_mem_data,start_segment_I+20))';
+meta_starts      = start_segment_I + 28;
+
+%See obj.populateRawDataStarts instead ...
 obj.data_starts  = meta_starts + meta_lengths;
 obj.data_lengths = seg_lengths - meta_lengths;
 
@@ -145,6 +155,5 @@ for iSeg = 1:n_segs
 end
 
 obj.raw_meta_data = raw_meta_data;
-
 
 end

@@ -4,12 +4,20 @@ classdef unique_raw_segment
     %   tdms.meta.unique_raw_segment
     %
     %   One of these is created for each unique meta data segment.
+    %
+    %   See Also:
+    %   tdms.meta.raw.populateObject
+    
+    %TODO: We want to hold onto all segments that this applies to.
     
     properties
-       seg_id
-       obj_names    %{1 x n}
-       obj_idx_len  %[1 x n] length of the idx data that is valid, this is 
-       %either:
+       first_seg_id
+       obj_names    %{1 x n} char
+       %These names have not been corrected for UTF-8.
+       
+       obj_idx_len  %[1 x n] double 
+       %Length of the idx data that is valid, 
+       %this is either:
        %- 0
        %- 20
        %- 28

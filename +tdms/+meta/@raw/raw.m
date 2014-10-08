@@ -21,15 +21,27 @@ classdef raw < tdms.sl.obj.handle_light
     end
     
     properties
+        n_unique_meta_segments
+        n_segments
+        
+        unique_segment_info %tdms.meta.unique_raw_segment
+    end
+    
+    %{
+    
+    properties
         %Length is equal to the # of raw objects
         %-------------------------------------------------------------------
         n_raw_objs           %Length of all raw_obj properties below
         
         raw_obj__names       %Name of each object, without being 
         %corrected for Unicode.
+        
         raw_obj__seg_id      %Assigned segment for each raw object. 
-        %Each lead_in start a new segment. Multiple objects can be
-        %specifieid in each segment.
+        %Each lead_in starts a new segment. Multiple objects can be
+        %specifieid in each segment. %TODO: Clarify this, I don't
+        %understand what this means ...
+        
         raw_obj__idx_len     %(double, row vector), Index Length
         %Index length specifies how many bytes are available to describe 
         %the data. Index length is the name given in the file format 
@@ -56,6 +68,7 @@ classdef raw < tdms.sl.obj.handle_light
         raw_obj__n_values_per_read %(double, row vector)
         raw_obj__n_bytes_per_read  %(double, row vector)
     end
+    %}
     
     properties
         %Length is by all props across all objects

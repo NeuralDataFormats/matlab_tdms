@@ -20,14 +20,14 @@ The lead in consists of 5 parts:
     - uint64
 
 
-%Uint8
+%When as uint8
 %1:4  - lead in flag
 %5:8  - toc mask
 %9:12 - version number
 %13:20 - segment length
 %21:28 - meta length
 %
-%Uint32
+%When as uint32
 %1 - lead in flag
 %2 - toc mask
 %3 - version number
