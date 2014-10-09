@@ -1,7 +1,7 @@
-function processMeta(obj)
-%processMeta
+function initMetaObject(obj)
+%initMetaObject Initializes tdms.meta object
 %
-%   tdms.meta.processMeta
+%   tdms.meta.initMetaObject
 %
 %   See Also:
 %   tdms.meta.raw
@@ -10,8 +10,6 @@ function processMeta(obj)
 %Step 1: Extract info from meta data
 %----------------------------------------------
 obj.raw_meta   = tdms.meta.raw(obj);
-
-return
 
 %Step 2: Consolidate objects into final set
 %----------------------------------------------

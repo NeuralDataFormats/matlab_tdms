@@ -1,6 +1,6 @@
-function populateObject(obj)
+function initMetaRawObject(obj)
 %
-%   tdms.meta.raw.populateObject
+%   tdms.meta.raw.initMetaRawObject
 %
 %   At this point we loop through the meta data extracting all of the
 %   information that is contained in it. This includes the names of all 
@@ -37,7 +37,7 @@ raw_meta_data_cells = obj.lead_in.raw_meta_data;
 %We convert to char because unique doesn't work on cell arrays of uint8s :/
 as_char = cellfun(@char,raw_meta_data_cells,'un',0);
 
-[unique_raw_metas_as_char,seg_id_of_unique] = unique(as_char,'stable');
+[unique_raw_metas_as_char,seg_id_of_unique,IC] = unique(as_char,'stable');
 
 unique_raw_metas_as_uint8 = raw_meta_data_cells(seg_id_of_unique);
 
@@ -77,7 +77,6 @@ for i_seg = 1:n_unique_segments
     next_u8_index = 5;
     for iObject = 1:n_objects
         cur_obj_count = cur_obj_count + 1;
-        
         
         %NAME RETRIEVAL ---------------------------------------------------
         byte_length_cur_obj_name = cur_u32_data(next_u8_index);
@@ -143,7 +142,7 @@ for i_seg = 1:n_unique_segments
         end
     end
     
-    temp = tdms.meta.unique_raw_segment();
+    temp = tdms.meta.raw_segment_info();
     temp.first_seg_id = seg_id_of_unique(i_seg);
     temp.obj_names    = obj_names;
     temp.obj_idx_len  = obj_idx_len;
@@ -152,7 +151,12 @@ for i_seg = 1:n_unique_segments
     unique_seg_info{i_seg} = temp;
 end
 
+obj.n_raw_objs = cur_obj_count;
 obj.unique_segment_info = [unique_seg_info{:}];
+
+obj.ordered_segment_info = obj.unique_segment_info(IC);
+obj.full_to_unique_map = IC;
+
 
 %Property populating
 %--------------------------------------------------------------------------

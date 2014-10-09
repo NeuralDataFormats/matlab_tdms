@@ -21,10 +21,31 @@ classdef raw < tdms.sl.obj.handle_light
     end
     
     properties
+        d1 = '-----  segment data info -----'
         n_unique_meta_segments
         n_segments
+        unique_segment_info %tdms.meta.raw_segment_info
+        %Ordered by their first occurence
+        ordered_segment_info    %[1 x n_segments], %tdms.meta.raw_segment_info
+        %Same as unique_segment_info but there is one per segment. Objects
+        %are ordered by segment.
         
-        unique_segment_info %tdms.meta.unique_raw_segment
+        n_raw_objs  %# of times something was specified about an object
+        %in the headers. Things such as:
+        %- adding to the read list again
+        %- initialization of an object
+        %- adding a property to an object
+    end
+    
+    properties (Hidden)
+       full_to_unique_map %Basically the IC output from unique
+       %specifying how to go from the unique_segment_info to the 
+       %ordered_segment_info
+       %
+       %ordered_segment_info = unique_segment_info(full_to_unique_map)
+       %
+       %give the original segment (as index)
+       %get the unique info for that segment (as value)
     end
     
     %{
@@ -32,7 +53,7 @@ classdef raw < tdms.sl.obj.handle_light
     properties
         %Length is equal to the # of raw objects
         %-------------------------------------------------------------------
-        n_raw_objs           %Length of all raw_obj properties below
+        
         
         raw_obj__names       %Name of each object, without being 
         %corrected for Unicode.
@@ -71,6 +92,7 @@ classdef raw < tdms.sl.obj.handle_light
     %}
     
     properties
+        d2 = '------  Raw Property Info ------'
         %Length is by all props across all objects
         %In other words, we have not paired the information down to being
         %on a per object basis. ??? Have we filtered properties?
@@ -78,9 +100,7 @@ classdef raw < tdms.sl.obj.handle_light
         n_props
         prop__names      %names, CHAR, NOT UNICODE
         prop__values     %translated values (i.e.) in type, not uint8
-        prop__raw_obj_id %raw object id, note raw objects may be
-        %redundant, unique(obj_names) will yield
-        %final ids
+        prop__raw_obj_id %raw object id.
         prop__types    %a log of property types, this might not be needed ...
     end
     

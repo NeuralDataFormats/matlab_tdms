@@ -4,42 +4,36 @@ classdef final_id < handle
     %
     %   Created by:
     %       tdms.meta.readMeta
+    %
+    %
+    %   This class is currently being rewritten.
+    %
+    %
+    %   
+    
     
     properties
         parent %Class: tdms.meta
     end
     
-    
     properties
-        %I think these are temporary variables and should be removed
+        n_unique_objs
+        unique_obj_names %All unique object names with unicode 
+        %encoding properly handled
         
-        %? What is the purpose of this variable?
-        final_obj_id__sorted            %final id sorted
+        %I think we are probably going to need:
+        %
+        %- for each final object (DELAYING FOR NOW)
+        %   - pointer to the unique segment info
+        %   - pointer to index in the unique segment info
+        %
+        %- for each raw id
+        %   - pointer to final id
         
-        I_sort__raw_to_final            %index of the original value in the sorted data
-        %         first_instance_of_final_obj     %Not currently used, references the first
-        %                                         %index in which the final object
-        %                                         %was referenced, could be used to
-        %                                         %order objects by write order ...
-    end
-    
-    properties
-        %.createFinalIDInfo()
-        %------------------------------------------------------------------
-        %length = raw_meta.n_raw_objs
-        final_obj_id       %(double, row vector, length = raw_meta.n_raw_objs
-        %For each raw object id, this gives the final object id
-        %This is in read order, i.e. the value at index 1 is the first
-        %object mentioned in the file, the second index is the second
-        %mentioned object in the file.
+        raw_id_to_final_id_map
+        %give a raw id (as index)
+        %get a final id (as value)
         
-        %Final properties
-        %---------------------------------------------------
-        %.createFinalIDInfo()
-        %-----------------------
-        n_unique_objs        %# of unique objects present
-        unique_obj_names     %(length = n_unique_objs) All unique object
-        %names with unicode encoding properly handled
         
     end
     
