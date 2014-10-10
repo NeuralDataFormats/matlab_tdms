@@ -29,7 +29,7 @@ classdef linearized_segment_info
     %
     %   Start off by making this nice and slow
     %
-    %   Start creating a final object
+    %   Start creating a final object - maybe some of this is linearized
     %   - name
     %   - data type
     %   - properties

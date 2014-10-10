@@ -11,6 +11,8 @@ options_local = obj.options;
 [tdmsPathToFile,tdmsNameOnly,fileExt] = fileparts(filepath);
 obj.is_index_only = strcmp(fileExt,obj.TDMS_INDEX_FILE_EXTENSION);
 
+%TODO: Check for an improper file input
+
 %Use index file if:
 %1) .tdms was passed in
 %AND 2) we allow index reading - meta_USE_INDEX

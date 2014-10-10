@@ -22,9 +22,9 @@ file_path = fullfile(BASE_PATH,'test123_12-11-06_1647_001.tdms');
 
 %NOTE: Apparently root and group objects may be missing ...
 
-% tic
-% wtf = convertTDMS(false,file_path);
-% toc
+tic
+wtf = convertTDMS(false,file_path);
+toc
 
 tic
 profile on
@@ -32,6 +32,10 @@ temp = tdms.meta(file_path);
 profile off
 toc
 profile viewer
+
+tic
+temp = tdms.meta(file_path);
+toc
 
 %tic
 %temp2 = TDMS_getStruct(file_path);

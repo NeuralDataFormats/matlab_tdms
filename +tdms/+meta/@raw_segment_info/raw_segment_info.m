@@ -17,10 +17,11 @@ classdef raw_segment_info
        obj_idx_len  %[1 x n] double 
        %Length of the idx data.
        %This is either:
-       %- 0
+       %- 0  - exactly matches previous specification
        %- 20
        %- 28 - for strings, specifies the total size in bytes
        %- intmax('uint32') calculated instead by  2^32 - 1
+       %        - no raw data in this segment
        
        obj_idx_data %[6 x n], uint32,
        %1 - data type

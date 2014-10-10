@@ -48,7 +48,7 @@ classdef meta < tdms.sl.obj.handle_light
     properties
         lead_in      %Class tdms.lead_in
         raw_meta     %Class tdms.meta.raw
-        final_ids    %Class tdms.meta.final_id
+        final_id_obj    %Class tdms.meta.final_id
         fixed_meta   %Class tdms.meta.fixed
         read_info    %Class tdms.data.read_info
         
@@ -139,7 +139,7 @@ classdef meta < tdms.sl.obj.handle_light
         function n_bytes_by_type = getNBytesByTypeArray
             %getNBytesByTypeArray
             %
-            %   tdms.meta.getNBytesByTypeArray
+            %   n_bytes_by_type = tdms.meta.getNBytesByTypeArray
             %
             %   Output:
             %   -------

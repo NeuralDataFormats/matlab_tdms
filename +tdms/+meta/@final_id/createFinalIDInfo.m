@@ -48,7 +48,7 @@ I_obj_start = [1 I_diff + 1];
 %                   i.e. the raw object id
 %                   - values represent the final ids
 
-final_obj_id__sorted = zeros(1,raw_meta_obj.n_raw_objs);
+final_obj_id__sorted = zeros(1,raw_meta.n_raw_objs);
 final_obj_id__sorted(I_obj_start) = 1;
 final_obj_id__sorted = cumsum(final_obj_id__sorted);
 

@@ -4,13 +4,6 @@ classdef final_id < handle
     %
     %   Created by:
     %       tdms.meta.readMeta
-    %
-    %
-    %   This class is currently being rewritten.
-    %
-    %
-    %   
-    
     
     properties
         parent %Class: tdms.meta
@@ -45,6 +38,7 @@ classdef final_id < handle
             %   tdms.meta.final_id 
             obj.parent = meta_obj;
             
+            %TODO: Rename this ...
             %tdms.meta.final_id.createFinalIDInfo
             obj.createFinalIDInfo();
         end

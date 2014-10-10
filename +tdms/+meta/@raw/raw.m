@@ -118,7 +118,7 @@ classdef raw < tdms.sl.obj.handle_light
             obj.lead_in = meta_obj.lead_in;
             
             %tdms.meta.raw.populateObject
-            obj.populateObject();
+            obj.initMetaRawObject();
         end
     end
     
