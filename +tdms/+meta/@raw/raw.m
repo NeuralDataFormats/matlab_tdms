@@ -37,15 +37,15 @@ classdef raw < tdms.sl.obj.handle_light
         %- adding a property to an object
     end
     
-    properties (Hidden)
+    properties
        full_to_unique_map %Basically the IC output from unique
        %specifying how to go from the unique_segment_info to the 
        %ordered_segment_info
        %
        %ordered_segment_info = unique_segment_info(full_to_unique_map)
        %
-       %give the original segment (as index)
-       %get the unique info for that segment (as value)
+       %- give the original segment (as index)
+       %- get the unique info for that segment (as value)
     end
     
     %{

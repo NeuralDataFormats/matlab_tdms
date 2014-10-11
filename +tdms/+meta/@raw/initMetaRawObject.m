@@ -37,6 +37,15 @@ raw_meta_data_cells = obj.lead_in.raw_meta_data;
 %We convert to char because unique doesn't work on cell arrays of uint8s :/
 as_char = cellfun(@char,raw_meta_data_cells,'un',0);
 
+%Possible optimization:
+%Often these files start off with some meta data then proceed into data
+%writes. When doing data writing often times the writing goes back and
+%forth. It seems like it might be possible to speed up the sorting process
+%if this fact was taken into account. Perhaps sorting could be done quicker
+%if the first n frames were taken out and manually compared to other
+%frames? Perhaps a "change-point" like analysis of the lengths looking for
+%a small meta header would indicate the start of data only frames.
+
 [unique_raw_metas_as_char,seg_id_of_unique,IC] = unique(as_char,'stable');
 
 unique_raw_metas_as_uint8 = raw_meta_data_cells(seg_id_of_unique);
@@ -154,9 +163,11 @@ end
 obj.n_raw_objs = cur_obj_count;
 obj.unique_segment_info = [unique_seg_info{:}];
 
-obj.ordered_segment_info = obj.unique_segment_info(IC);
 obj.full_to_unique_map = IC;
 
+%We'll hold off on this until we've translated things
+%- like the # of value and # of total bytes
+%obj.ordered_segment_info = obj.unique_segment_info(IC);
 
 %Property populating
 %--------------------------------------------------------------------------

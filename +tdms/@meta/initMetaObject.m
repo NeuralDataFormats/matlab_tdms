@@ -5,7 +5,20 @@ function initMetaObject(obj)
 %
 %   See Also:
 %   tdms.meta.raw
+
+%Possible Optimization:
+%----------------------
+%If there is a new list and the same sets of meta segments afterwards
+%before a new list, as has been seen previously, we could replicate the
+%final results from the previous translation.
+%e.g.
+%If we have the segments:
+%a b c a b c a
 %
+%Where a b & c represent segments with instructions and 'a' starts a new
+%object list, then once we translate the first 3 segments, we could
+%duplicate these instructions (nearly) for generating the second set of
+%segments. The only thing that would change is the data starts.
 
 n_bytes_by_type = tdms.meta.getNBytesByTypeArray;
 
@@ -167,7 +180,11 @@ for iSeg = 1:n_segments
     fsi.n_values_per_channel = seg_n_values_per_read;
     fsi.n_bytes_per_channel  = seg_n_bytes_per_read;
     fsi.n_chunks             = n_chunks;
+    
+    temp_final_segment_info_ca{iSeg} = fsi;
 end
+
+obj.final_segment_info = [temp_final_segment_info_ca{:}];
 
 return
 
@@ -180,3 +197,5 @@ obj.props      = tdms.props(obj);
 obj.read_info  = tdms.data.read_info(obj);
 
 end
+
+%function h__fix

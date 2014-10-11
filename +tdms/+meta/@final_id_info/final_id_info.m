@@ -1,6 +1,7 @@
-classdef final_id < handle
+classdef final_id_info < handle
     %
-    %   Class: tdms.meta.final_id
+    %   Class: 
+    %   tdms.meta.final_id_info
     %
     %   Created by:
     %       tdms.meta.readMeta
@@ -31,16 +32,15 @@ classdef final_id < handle
     end
     
     methods
-        function obj = final_id(meta_obj)
+        function obj = final_id_info(meta_obj)
             %
-            %   obj = final_id(meta_obj)
+            %   obj = tdms.meta.final_id_info(meta_obj)
             %
-            %   tdms.meta.final_id 
+            
             obj.parent = meta_obj;
             
-            %TODO: Rename this ...
-            %tdms.meta.final_id.createFinalIDInfo
-            obj.createFinalIDInfo();
+            %tdms.meta.final_id_info.initFinalIDInfo
+            obj.initFinalIDInfo();
         end
     end
     

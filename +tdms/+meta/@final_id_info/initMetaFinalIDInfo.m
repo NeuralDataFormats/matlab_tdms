@@ -1,5 +1,6 @@
-function createFinalIDInfo(obj)
-%createFinalIDInfo(obj)
+function initMetaFinalIDInfo(obj)
+%
+%   tdms.meta.final_id.initMetaFinalIDInfo
 %
 %   The goal of this method is to identify multiple reads from the same
 %   object as belonging to one object. The only way to identify objects is
@@ -11,7 +12,7 @@ function createFinalIDInfo(obj)
 %   does minimize function calls) is much faster.
 %
 %   FULL PATH:
-%       tdms.meta.final_id.createFinalIDInfo
+%       
 %
 %   See Also:
 %       tdms.meta.raw
