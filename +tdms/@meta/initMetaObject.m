@@ -20,36 +20,45 @@ function initMetaObject(obj)
 %duplicate these instructions (nearly) for generating the second set of
 %segments. The only thing that would change is the data starts.
 
-n_bytes_by_type = tdms.meta.getNBytesByTypeArray;
-
 UINT32_MAX = 2^32-1;
 
 %Step 1: Extract info from meta data
 %----------------------------------------------
-obj.raw_meta   = tdms.meta.raw(obj);
+obj.raw_meta = tdms.meta.raw(obj);
+
+%Step 2: Get information regarding each final object
+%----------------------------------------------------
+obj.final_id_info = tdms.meta.final_id_info(obj);
+
+return
+
+%Step 3: Generate corrected unique segment info
+%----------------------------------------------
+%- remove typecasting that was not done previously
+%- update n_bytes_per_read for all non-string types
+%- this will then be propogated back into the proper read order
+
+%Step 4: Generate read information
+%----------------------------------------------
+n_unique_objs = obj.final_id_info.n_unique_objs;
 
 ordered_segment_info = obj.raw_meta.ordered_segment_info;
 
-%Step 2: Consolidate objects into final set
-%----------------------------------------------
-obj.final_id_obj  = tdms.meta.final_id(obj);
-
-n_unique_objs = obj.final_id_obj.n_unique_objs;
 
 %These will be temporary variables
 final_obj__reading_channel       = false(1,n_unique_objs); %true if the
+%channel should be read for a given segment
+
+final_obj__in_read_list          = false(1,n_unique_objs);
 final_obj__has_raw_data          = false(1,n_unique_objs); %This is a hold
 %over from the old code. I might get rid of it. Set true if there is ever a
 %specification of the channel having data.
 
 %channel is in the read list
 final_obj__info_set              = false(1,n_unique_objs);
-final_obj__data_type             = zeros(1,n_unique_objs,'uint32');
+
 final_obj__n_values_per_read     = zeros(1,n_unique_objs);
 final_obj__n_bytes_per_read      = zeros(1,n_unique_objs);
-
-%final_obj__pointer_to_read_order = zeros(1,n_unique_objs); %We need this so
-%that we can tell it not to read data temporarily ...
 
 lead_in__data_starts    = obj.lead_in.data_starts;
 lead_in__data_lengths   = obj.lead_in.data_lengths;
@@ -61,7 +70,7 @@ n_segments = obj.raw_meta.n_segments;
 temp__read_order       = zeros(1,20); %Values represent final object ids
 temp__read_order_count = 0;
 
-raw_id_to_final_id_map = obj.final_id_obj.raw_id_to_final_id_map;
+raw_id_to_final_id_map = obj.final_id_info.raw_id_to_final_id_map;
 
 temp_final_segment_info_ca = cell(1,n_segments);
 
@@ -73,6 +82,7 @@ for iSeg = 1:n_segments
         if temp__read_order_count ~= 0
             %Set reading of objects to false
             final_obj__reading_channel(temp__read_order(1:temp__read_order_count)) = false;
+            final_obj__in_read_list(temp__read_order(1:temp__read_order_count)) = false;
         end
         temp__read_order_count = 0;
     end
@@ -86,7 +96,6 @@ for iSeg = 1:n_segments
     seg_final_ids = raw_id_to_final_id_map(cur_seg_info.obj_id);
     
     seg_idx_data   = cur_seg_info.obj_idx_data;
-    seg_data_types = seg_idx_data(1,:);
     
     %TODO: Precompute these on the unique set
     seg_n_values   = double(tdms.sl.io.typecastC(seg_idx_data(3:4,:),'uint64'));
@@ -101,9 +110,7 @@ for iSeg = 1:n_segments
         cur_idx_len  = idx_lens(iID);
         if cur_idx_len == 0
             %same as before, runs checks
-            if ~final_obj__info_set(cur_final_id)
-                error('An unset channel can''t use old specs if they haven''t been specified')
-            end
+
             %NOTE: # of values
             if ~final_obj__reading_channel(cur_final_id)
                 final_obj__reading_channel(cur_final_id) = true;
@@ -122,37 +129,14 @@ for iSeg = 1:n_segments
             end
             
             final_obj__reading_channel(cur_final_id) = false;
-            
-            %nothing for this trial, set temp__n_bytes_per_read accordingly
-            %IF it is in the read list
-            %
-            %TODO: This is the really messy part
         else
-            if final_obj__info_set(cur_final_id)
-                if final_obj__data_type(cur_final_id) ~= seg_data_types(iID)
-                    %TODO: Make error more explicit
-                    error('mismatch in data type, this is not allowed')
-                end
-            else
-                final_obj__info_set(cur_final_id) = true;
-                final_obj__has_raw_data(cur_final_id) = true;
-            end
-            
             final_obj__n_values_per_read(cur_final_id) = seg_n_values(iID);
             
             if ~final_obj__reading_channel(cur_final_id)
                 final_obj__reading_channel(cur_final_id) = true;
                 temp__read_order_count = temp__read_order_count + 1;
                 temp__read_order(temp__read_order_count) = cur_final_id;
-            end
-            
-            %TODO: This will eventually be precomputed
-            if seg_size_bytes(iID) == 0
-                final_obj__n_bytes_per_read(cur_final_id) = n_bytes_by_type(seg_data_types(iID));
-            else
-                final_obj__n_bytes_per_read(cur_final_id) = seg_size_bytes(iID);
-            end
-            
+            end            
         end
     end
     
@@ -195,6 +179,10 @@ obj.fixed_meta = tdms.meta.fixed(obj);
 obj.props      = tdms.props(obj);
 
 obj.read_info  = tdms.data.read_info(obj);
+
+end
+
+function h__verifyDataTypeSame(obj)
 
 end
 

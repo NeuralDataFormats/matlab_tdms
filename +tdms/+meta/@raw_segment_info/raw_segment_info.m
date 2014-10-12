@@ -28,9 +28,30 @@ classdef raw_segment_info
        %2 - # of dimensions of data (only "1" is currently valid)
        %3:4 - # of values, uint64
        %5:6 - # total size in bytes - only for strings
+       %
+       %
+       %    
        
        obj_id       %[1 x n] This is a unique # that is given to 
        %every time any object appears in the meta data.
+    end
+    
+    properties (Dependent)
+       data_type
+       unprocessed_n_read_values
+       unprocessed_n_read_bytes
+    end
+    
+    methods
+        function value = get.data_type(obj)
+           value = obj.obj_idx_data(1,:); 
+        end
+        function value = get.unprocessed_n_read_values(obj)
+           value = obj.obj_idx_data(3:4,:);
+        end
+        function value = get.unprocessed_n_read_bytes(obj)
+           value = obj.obj_idx_data(5:6,:);
+        end
     end
     
     methods

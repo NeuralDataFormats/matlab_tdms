@@ -38,8 +38,12 @@ classdef lead_in < sl.obj.handle_light
     end
     
     %FLAGS  ===============================================================
+    
+    properties
+       d2 = '----  Output Flags ----' 
+    end
+    
     properties (Dependent)
-        d2 = '----  Output Flags ----'
         has_meta_data   %Indicates whether or not new property values have
         %been defined. %todo: find code that uses this and point to it
         new_obj_list    %Whether or not to reset the read order for objects.
@@ -78,22 +82,22 @@ classdef lead_in < sl.obj.handle_light
     %TOC_MASK PARSING FUNCTIONS ===========================================
     methods
         function value = get.has_meta_data(obj)
-            value = bitget(obj.toc_masks,2);
+            value = logical(bitget(obj.toc_masks,2));
         end
         function value = get.new_obj_list(obj)
-            value = bitget(obj.toc_masks,3);
+            value = logical(bitget(obj.toc_masks,3));
         end
         function value = get.has_raw_data(obj)
-            value = bitget(obj.toc_masks,4);
+            value = logical(bitget(obj.toc_masks,4));
         end
         function value = get.is_interleaved(obj)
-            value = bitget(obj.toc_masks,6);
+            value = logical(bitget(obj.toc_masks,6));
         end
         function value = get.is_big_endian(obj)
-            value = bitget(obj.toc_masks,7);
+            value = logical(bitget(obj.toc_masks,7));
         end
         function value = get.has_raw_daqmx(obj)
-            value = bitget(obj.toc_masks,8);
+            value = logical(bitget(obj.toc_masks,8));
         end
     end
     
