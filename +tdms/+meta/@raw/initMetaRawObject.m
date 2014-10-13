@@ -3,10 +3,10 @@ function initMetaRawObject(obj)
 %   tdms.meta.raw.initMetaRawObject
 %
 %   At this point we loop through the meta data extracting all of the
-%   information that is contained in it. This includes the names of all 
+%   information that is contained in it. This includes the names of all
 %   objects, whether or not they have data, how much data they have, and
 %   whether or not they have properties and the associated property values.
-%   
+%
 %   We will need to process this information further, but the use
 %   of the raw meta data from the initial read will no longer be needed.
 %   After this everything is in specific variables as specified in this
@@ -37,16 +37,7 @@ raw_meta_data_cells = obj.lead_in.raw_meta_data;
 %We convert to char because unique doesn't work on cell arrays of uint8s :/
 as_char = cellfun(@char,raw_meta_data_cells,'un',0);
 
-%Possible optimization:
-%Often these files start off with some meta data then proceed into data
-%writes. When doing data writing often times the writing goes back and
-%forth. It seems like it might be possible to speed up the sorting process
-%if this fact was taken into account. Perhaps sorting could be done quicker
-%if the first n frames were taken out and manually compared to other
-%frames? Perhaps a "change-point" like analysis of the lengths looking for
-%a small meta header would indicate the start of data only frames.
-
-[unique_raw_metas_as_char,seg_id_of_unique,IC] = unique(as_char,'stable');
+[unique_raw_metas_as_char,seg_id_of_unique,IC] = h__getUniqueInfo(as_char);
 
 unique_raw_metas_as_uint8 = raw_meta_data_cells(seg_id_of_unique);
 
@@ -82,7 +73,7 @@ for i_seg = 1:n_unique_segments
     obj_idx_len  = zeros(1,n_objects);
     obj_idx_data = zeros(6,n_objects,'uint32');
     obj_id       = (cur_obj_count+1):(cur_obj_count + n_objects);
-        
+    
     next_u8_index = 5;
     for iObject = 1:n_objects
         cur_obj_count = cur_obj_count + 1;
@@ -124,7 +115,7 @@ for i_seg = 1:n_unique_segments
             prop__names      = [prop__names      cell(1,INIT_PROP_SIZE)];
             prop__values     = [prop__values     cell(1,INIT_PROP_SIZE)];
             prop__raw_obj_id = [prop__raw_obj_id zeros(1,INIT_PROP_SIZE)];
-            prop__types      = [prop__types      zeros(1,INIT_PROP_SIZE)]; 
+            prop__types      = [prop__types      zeros(1,INIT_PROP_SIZE)];
         end
         
         prop__raw_obj_id(cur_prop_index+1:cur_prop_index+n_properties) = cur_obj_count;
@@ -176,6 +167,98 @@ obj.prop__names       = prop__names(1:cur_prop_index);
 obj.prop__values      = prop__values(1:cur_prop_index);
 obj.prop__raw_obj_id  = prop__raw_obj_id(1:cur_prop_index);
 obj.prop__types       = prop__types(1:cur_prop_index);
+
+end
+
+function [unique_raw_metas_as_char,seg_id_of_unique,IC] = h__getUniqueInfo(as_char)
+%
+%
+%   TODO: Document function
+%
+%Possible optimization:
+%Often these files start off with some meta data then proceed into data
+%writes. When doing data writing often times the writing goes back and
+%forth. It seems like it might be possible to speed up the sorting process
+%if this fact was taken into account. Perhaps sorting could be done quicker
+%if the first n frames were taken out and manually compared to other
+%frames? Perhaps a "change-point" like analysis of the lengths looking for
+%a small meta header would indicate the start of data only frames.
+
+%TODO: Add the 20 to options
+if length(as_char) < 20
+    %Then don't bother with finding runs ...
+    [unique_raw_metas_as_char,seg_id_of_unique,IC] = unique(as_char,'stable');
+else
+    [unique_raw_metas_as_char,seg_id_of_unique,temp_IC] = unique(as_char(1:20),'stable');
+    
+    %1 2 3 4 3 4 3 4 3 4 <= want to know that the pattern is 3,4
+    
+    
+    %???? Does the repeating always have lower values come before
+    %higher values - I think so ...
+    %
+    %   We could eventually adjust the code to not make this assumption
+    
+    %I think we need to go back 2
+    %
+    %1 2 3 4 5 6 7 8 5 6 7 8 5 6
+    %                          x
+    %                  x
+    %          x
+    %                1 1 1 1      <= the last valid run of this set
+    last_element_I = find(temp_IC == temp_IC(end));
+    
+    
+    %If this is not true, then we haven't looked out far enough, or there
+    %just aren't any runs ....
+    if length(last_element_I) > 2
+        temp_start  = last_element_I(end-2);
+        
+        [~,I_min]   = min(temp_IC(temp_start:end));
+        I_min_fixed = temp_start + I_min - 1;
+        
+        %Start search for max AFTER min
+        [~,I_max]   = max(temp_IC(I_min_fixed:end));
+        I_max_fixed = I_min_fixed + I_max - 1;
+        
+        possible_run_IDs = temp_IC(I_min_fixed:I_max_fixed);
+        
+        run_start_index = I_min_fixed;
+        
+        data_is_run = true;
+        
+        run_length = length(possible_run_IDs);
+        
+        for iRunIndex = 1:run_length
+            cur_start_index = run_start_index + iRunIndex - 1;
+            %This is where we do our comparisons, but since we are
+            %expecting a certain parttern, we get many less comparisons
+            %then sorting normally would.
+            data_is_run = all(strcmp(as_char(cur_start_index),as_char(cur_start_index:run_length:end)));
+            if ~data_is_run
+                break
+            end
+        end
+        
+        if data_is_run
+            IC = zeros(size(as_char));
+            IC(1:length(temp_IC)) = temp_IC;
+            for iRunIndex = 1:run_length
+                cur_start_index = run_start_index + iRunIndex - 1;
+                cur_IC_id = temp_IC(cur_start_index);
+                IC(cur_start_index:run_length:end) = cur_IC_id;
+            end
+            % % % % %             [unique_raw_metas_as_char,seg_id_of_unique,IC2] = unique(as_char,'stable');
+            % % % % %             if ~isequal(IC2(:),IC(:))
+            % % % % %                 error('Code broken')
+            % % % % %             end
+        else
+            [unique_raw_metas_as_char,seg_id_of_unique,IC] = unique(as_char,'stable');
+        end
+    end
+    
+    
+end
 
 end
 

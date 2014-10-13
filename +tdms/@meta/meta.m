@@ -46,9 +46,11 @@ classdef meta < tdms.sl.obj.handle_light
     end
     
     properties
+        p_summary    %tdms.meta.processing_summary
         lead_in      %Class tdms.lead_in
         raw_meta     %Class tdms.meta.raw
         final_id_info    %Class tdms.meta.final_id_info
+        corrected_seg_info %tdms.meta.corrected_segment_info
         final_segment_info
         fixed_meta   %Class tdms.meta.fixed
         read_info    %Class tdms.data.read_info
@@ -94,6 +96,8 @@ classdef meta < tdms.sl.obj.handle_light
                 obj.options = options_in;
             end
             
+            obj.p_summary = tdms.meta.processing_summary;
+            
             obj.filepath_input = file_path;
             
             %tdms.meta.open_file
@@ -104,6 +108,7 @@ classdef meta < tdms.sl.obj.handle_light
             %- processing of lead in
             %- extraction of meta data to memory
             obj.lead_in = tdms.lead_in(...
+                obj.p_summary,...
                 obj.options,...
                 obj.fid,...
                 obj.reading_index_file);

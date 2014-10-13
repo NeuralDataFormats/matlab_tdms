@@ -55,7 +55,7 @@ obj.n_unique_objs = length(I_obj_start);
 obj.unique_obj_names = tdms.meta.fixNames(sorted_names(I_obj_start));
 
 
-
+%==========================================================================
 %TODO: Finish this code:
 %------------------------------------
 %1) populate data types
@@ -77,15 +77,27 @@ I_start = obj.I_start__raw_obj_ids;
 I_end   = obj.I_end__raw_obj_ids;
 final_to_raw_map = obj.final_to_raw_id_map;
 
+%TODO: Break this into a couple of loops
+
 final_obj__has_raw_data = true(1,obj.n_unique_objs);
 for iObj = 1:length(I_start)
    temp_map = final_to_raw_map(I_start(iObj):I_end(iObj));
    obj_data_types = temp_data_types(temp_map);
    obj_idx_lens = idx_lens(temp_map);
    
-   %TODO: This mess of code needs to be cleaned up
-   %----------------------------------------------
-   I_data_type = 1;
+   %- Check 'use previous raw data info' specification
+   %- Determine if this object has any raw data
+   %------------------------------------------------
+   %A segment can specify that the raw data information used previously
+   %should be used for the segment currently being read. We need to check
+   %that this never occurs prior to any specification being given.
+   %
+   %I've also tried to write this so that the checks fall through quickly
+   
+   I_data_type = 1; %This is the index we will use to determine the data
+   %type of the object. Since it is possible (I think) to write a channel's
+   %properties to a segment, but not its data, it is possible that the data
+   %type of the first time the object is seen is actually unspecified.
    
    I_previous = find(obj_idx_lens == 0,1);
    if ~isempty(I_previous)
@@ -119,10 +131,9 @@ for iObj = 1:length(I_start)
        end
    end
 
+   %Validate consistency of data type
    %---------------------------------------------
    if final_obj__has_raw_data(iObj)   
-       %TODO: Should also set raw data here as well
-
        mask = obj_data_types == obj_data_types(1) | obj_idx_lens == 0;
        if ~all(mask)
            %TODO: I think this will fail for Lazerus readings

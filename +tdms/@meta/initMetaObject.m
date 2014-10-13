@@ -30,10 +30,15 @@ obj.raw_meta = tdms.meta.raw(obj);
 %----------------------------------------------------
 obj.final_id_info = tdms.meta.final_id_info(obj);
 
-return
-
 %Step 3: Generate corrected unique segment info
 %----------------------------------------------
+return
+
+%JAH: Working on this function
+obj.corrected_seg_info = h__createCorrectedSegmentInfo(obj);
+
+return
+
 %- remove typecasting that was not done previously
 %- update n_bytes_per_read for all non-string types
 %- this will then be propogated back into the proper read order
@@ -182,8 +187,20 @@ obj.read_info  = tdms.data.read_info(obj);
 
 end
 
-function h__verifyDataTypeSame(obj)
+function corrected_seg_info = h__createCorrectedSegmentInfo(obj)
+
+%TODO: Also check that n_values is 0 for anything with no data
+
+raw_meta = obj.raw_meta;
+final_id_info = obj.final_id_info;
+
+unique_segment_info = raw_meta.unique_segment_info;
+
+%JAH: At this point
+
+keyboard
+
+
 
 end
-
 %function h__fix

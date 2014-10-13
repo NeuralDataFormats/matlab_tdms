@@ -102,21 +102,30 @@ classdef lead_in < sl.obj.handle_light
     end
     
     methods
-        function obj = lead_in(options,fid,reading_index_file)
+        function obj = lead_in(p_summary,options,fid,reading_index_file)
             %
             %   
             %   Inputs:
             %   -------
-            %   options :
+            %   options : tdms.options
             %   fid :
-            %   reading_index_file : 
-            %   
+            %       This is an open reference to the file that is being
+            %       read. This can either be the index or data file. The
+            %       'reading_index_file' input specifies which it is.
+            %   reading_index_file : logical
+            %       If true 'fid' points to the index file. If false it
+            %       points to the data file.
             %
+            %   See Also:
+            %   tdms.options
             
             obj.populateFirstWord(reading_index_file);
             
             if reading_index_file
                 %tdms.lead_in.readLeadInFromInMemData
+                proc_approach= 'memory';
+                proc_reason = ...
+                    'Memory approach always used when using the index file';
                 obj.readLeadInFromInMemData(options,fid);
             else
                 fseek(fid,0,1);
@@ -125,20 +134,39 @@ classdef lead_in < sl.obj.handle_light
                 
                 if options.meta__data_in_mem_rule == 0
                     %Never do from memory
+                    proc_approach = 'data file';
+                    proc_reason = ...
+                        'User option ''meta__data_in_mem_rule'' forbids using in memory approach';
                     obj.readLeadInFromDataFile(eof_position,options,fid);
                 elseif options.meta__data_in_mem_rule == 1
                     %Do in memory based on size
                     n_MB_data = eof_position/1e6;
                     if n_MB_data < options.meta__max_MB_process_data_in_mem
+                        proc_approach= 'memory';
+                        proc_reason = sprintf(['Data size: %0.2f (MB) was less than the cutoff ' ...
+                            'of %0.2f as specified by the option ''meta__max_MB_process_data_in_mem'''],...
+                            n_MB_data,options.meta__max_MB_process_data_in_mem);
                         obj.readLeadInFromInMemData(options,fid);
                     else
+                        proc_approach = 'data file';
+                        proc_reason = sprintf(['Data size: %0.2f (MB) was greater than the cutoff ' ...
+                            'of %0.2f as specified by the option ''meta__max_MB_process_data_in_mem'''],...
+                            n_MB_data,options.meta__max_MB_process_data_in_mem);
                         obj.readLeadInFromDataFile(eof_position,options,fid);
                     end
                 else
                     %Always from memory
+                    proc_approach = 'memory';
+                    proc_reason = ...
+                        'User option ''meta__data_in_mem_rule'' specifies to always use the memory approach';
                     obj.readLeadInFromInMemData(options,fid);
                 end
+                
+                
             end
+            
+            p_summary.lead_in_processing_approach = proc_approach;
+            p_summary.lead_in_processing_approach_reason = proc_reason;
             
             obj.checkTocMask();
         end

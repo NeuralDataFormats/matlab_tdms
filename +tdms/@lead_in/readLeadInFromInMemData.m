@@ -15,6 +15,9 @@ function in_mem_data = readLeadInFromInMemData(obj,options,fid)
 %Pass this decision up ...
 in_mem_data = fread(fid,[1 Inf],'*uint8');
 
+%TODO: I don't think this approach is the best if not using the index
+%When using a index file, the lead ins will occupy a large portion of the 
+%data. When not reading from an index file, this is not the case.
 if options.lead_in_use_strfind_approach
     %Note, this may only be faster for high segment count data
     %TODO: Add check on length ...
