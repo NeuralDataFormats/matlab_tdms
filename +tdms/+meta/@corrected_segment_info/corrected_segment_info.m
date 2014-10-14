@@ -12,6 +12,7 @@ classdef corrected_segment_info
     properties
        first_seg_id
        final_obj_ids
+       idx_len
        n_bytes_read
        n_values_read
     end

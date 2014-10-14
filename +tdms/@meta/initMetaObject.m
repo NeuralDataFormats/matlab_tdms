@@ -32,36 +32,25 @@ obj.final_id_info = tdms.meta.final_id_info(obj);
 
 %Step 3: Generate corrected unique segment info
 %----------------------------------------------
-return
 
 %JAH: Working on this function
 obj.corrected_seg_info = h__createCorrectedSegmentInfo(obj);
-
-return
-
-%- remove typecasting that was not done previously
-%- update n_bytes_per_read for all non-string types
-%- this will then be propogated back into the proper read order
 
 %Step 4: Generate read information
 %----------------------------------------------
 n_unique_objs = obj.final_id_info.n_unique_objs;
 
-ordered_segment_info = obj.raw_meta.ordered_segment_info;
-
-
 %These will be temporary variables
 final_obj__reading_channel       = false(1,n_unique_objs); %true if the
 %channel should be read for a given segment
 
-final_obj__in_read_list          = false(1,n_unique_objs);
-final_obj__has_raw_data          = false(1,n_unique_objs); %This is a hold
-%over from the old code. I might get rid of it. Set true if there is ever a
-%specification of the channel having data.
+final_obj__in_read_list          = false(1,n_unique_objs); %true if the
+%channel is in the read list. An object may be in the read list but may
+%not be read from if data index tag specifies that the segment has no data.
+%This variable helps us manage the read order of objects for a segment.
 
-%channel is in the read list
-final_obj__info_set              = false(1,n_unique_objs);
-
+%These both are "current" values that will potentially change as the
+%segments progress.
 final_obj__n_values_per_read     = zeros(1,n_unique_objs);
 final_obj__n_bytes_per_read      = zeros(1,n_unique_objs);
 
@@ -79,6 +68,10 @@ raw_id_to_final_id_map = obj.final_id_info.raw_id_to_final_id_map;
 
 temp_final_segment_info_ca = cell(1,n_segments);
 
+full_to_unique_seg_map = obj.raw_meta.full_to_unique_map;
+
+corrected_segment_info = obj.corrected_seg_info;
+
 for iSeg = 1:n_segments
     
     dirty_read_list = false;
@@ -92,11 +85,15 @@ for iSeg = 1:n_segments
         temp__read_order_count = 0;
     end
     
+    cur_seg_info = corrected_segment_info(full_to_unique_seg_map(iSeg));
+    
+    
     %TODO: Need to handle the Lazerus case:
     %- len = intmax('uint32') but in read order
-    cur_seg_info = ordered_segment_info(iSeg);
     
     %get final ids of this segment
+    
+    keyboard
     
     seg_final_ids = raw_id_to_final_id_map(cur_seg_info.obj_id);
     
@@ -127,7 +124,6 @@ for iSeg = 1:n_segments
             %
             %Is this temporary, does it come back in the next segment
             %automatically?????
-            
             
             if final_obj__reading_channel(cur_final_id)
                dirty_read_list = true; 
@@ -188,8 +184,17 @@ obj.read_info  = tdms.data.read_info(obj);
 end
 
 function corrected_seg_info = h__createCorrectedSegmentInfo(obj)
+%
+%
+%   See Also:
+%   tdms.meta.corrected_segment_info
+%   tdms.meta.raw_segment_info
 
-%TODO: Also check that n_values is 0 for anything with no data
+
+%- remove typecasting that was not done previously
+%- update n_bytes_per_read for all non-string types
+%- this will then be propogated back into the proper read order
+%- Also check that n_values is 0 for anything with no data
 
 raw_meta = obj.raw_meta;
 final_id_info = obj.final_id_info;
@@ -198,9 +203,48 @@ unique_segment_info = raw_meta.unique_segment_info;
 
 %JAH: At this point
 
-keyboard
+n_unique_segments = length(unique_segment_info);
+
+temp_ca = cell(1,n_unique_segments);
+
+temp_n_read_values = [unique_segment_info.unprocessed_n_read_values];
+temp_n_size_bytes  = [unique_segment_info.unprocessed_n_read_bytes];
+
+fixed_n_read_values = tdms.sl.io.typecastC(temp_n_read_values,'uint64');
+fixed_n_size_bytes  = tdms.sl.io.typecastC(temp_n_size_bytes,'uint64');
 
 
+raw_to_final_id_map = final_id_info.raw_id_to_final_id_map;
 
+mask = fixed_n_size_bytes == 0;
+fixed_n_size_bytes(mask) = final_id_info.default_byte_size(raw_to_final_id_map(mask));
+
+
+has_raw_data = final_id_info.haw_raw_data';
+
+for iSeg = 1:n_unique_segments
+
+    cur_raw_segment_info = unique_segment_info(iSeg);
+    
+    temp = tdms.meta.corrected_segment_info;
+
+    temp.first_seg_id  = cur_raw_segment_info.first_seg_id;
+    
+    raw_obj_ids = cur_raw_segment_info.obj_id;
+    
+    temp.final_obj_ids = raw_to_final_id_map(raw_obj_ids);
+    temp.n_bytes_read  = fixed_n_size_bytes(raw_obj_ids);
+    temp.n_values_read = fixed_n_read_values(raw_obj_ids);
+    temp.idx_len = cur_raw_segment_info.obj_idx_len;
+    
+    temp_ca{iSeg} = temp;
+    
+    local_has_raw_data = has_raw_data(temp.final_obj_ids);
+    
+    if any(~local_has_raw_data & temp.n_values_read ~= 0)
+       error('Some object with values to read doesn''t have raw data') 
+    end
 end
-%function h__fix
+
+corrected_seg_info = [temp_ca{:}];
+end
