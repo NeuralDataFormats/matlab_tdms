@@ -35,6 +35,7 @@ classdef lead_in < sl.obj.handle_light
         
         toc_masks %[1 x n_segs], uint32 
         %Instructions for each segment. See the flags.
+        reading_index_file
     end
     
     %FLAGS  ===============================================================
@@ -119,14 +120,15 @@ classdef lead_in < sl.obj.handle_light
             %   See Also:
             %   tdms.options
             
-            obj.populateFirstWord(reading_index_file);
+            obj.reading_index_file = reading_index_file;
+            obj.populateFirstWord();
             
             if reading_index_file
                 %tdms.lead_in.readLeadInFromInMemData
                 proc_approach= 'memory';
                 proc_reason = ...
                     'Memory approach always used when using the index file';
-                obj.readLeadInFromInMemData(options,fid);
+                obj.readLeadInFromInMemData(options,fid,true);
             else
                 fseek(fid,0,1);
                 eof_position = ftell(fid);
@@ -146,7 +148,7 @@ classdef lead_in < sl.obj.handle_light
                         proc_reason = sprintf(['Data size: %0.2f (MB) was less than the cutoff ' ...
                             'of %0.2f as specified by the option ''meta__max_MB_process_data_in_mem'''],...
                             n_MB_data,options.meta__max_MB_process_data_in_mem);
-                        obj.readLeadInFromInMemData(options,fid);
+                        obj.readLeadInFromInMemData(options,fid,false);
                     else
                         proc_approach = 'data file';
                         proc_reason = sprintf(['Data size: %0.2f (MB) was greater than the cutoff ' ...
@@ -203,13 +205,13 @@ classdef lead_in < sl.obj.handle_light
             obj.data_starts = cumsum(28 + seg_lengths_shifted) + meta_lengths;
             
         end
-        function populateFirstWord(obj,reading_index_file)
+        function populateFirstWord(obj)
             %
             %   Rather than read all letters one at a time, we read the
             %   full set of characters and do a comparison to the value
             %   calculated here.
 
-            if reading_index_file
+            if obj.reading_index_file
                 obj.first_word = typecast(uint8('TDSh'),'uint32');
             else
                 obj.first_word = typecast(uint8('TDSm'),'uint32');

@@ -2,6 +2,11 @@ classdef corrected_segment_info
     %
     %   Class:
     %   tdms.meta.corrected_segment_info
+    %
+    %   See Also:
+    %   tdms.meta.raw.initMetaRawObject
+    %   tdms.meta.raw_segment_info
+    %   tdms.meta.initMetaObject>h__createCorrectedSegmentInfo
 
     
        %1 - data type
@@ -13,7 +18,8 @@ classdef corrected_segment_info
        first_seg_id
        final_obj_ids
        idx_len
-       n_bytes_read
+       n_bytes_per_value
+       n_bytes_per_read
        n_values_read
     end
     

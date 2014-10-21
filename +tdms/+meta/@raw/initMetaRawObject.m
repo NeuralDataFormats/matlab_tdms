@@ -255,6 +255,8 @@ else
         else
             [unique_raw_metas_as_char,seg_id_of_unique,IC] = unique(as_char,'stable');
         end
+    else
+    	[unique_raw_metas_as_char,seg_id_of_unique,IC] = unique(as_char,'stable');
     end
     
     

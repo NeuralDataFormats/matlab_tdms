@@ -1,4 +1,4 @@
-function in_mem_data = readLeadInFromInMemData(obj,options,fid)
+function in_mem_data = readLeadInFromInMemData(obj,options,fid,is_index_file)
 %
 %
 %   readLeadInFromInMemData(obj,options,fid)
@@ -18,15 +18,12 @@ in_mem_data = fread(fid,[1 Inf],'*uint8');
 %TODO: I don't think this approach is the best if not using the index
 %When using a index file, the lead ins will occupy a large portion of the 
 %data. When not reading from an index file, this is not the case.
-if options.lead_in_use_strfind_approach
+if is_index_file || options.lead_in_use_strfind_approach
     %Note, this may only be faster for high segment count data
     %TODO: Add check on length ...
     h__useStrfindApproach(obj,options,in_mem_data)
     return
 end
-
-
-%Code below is not finished ...
 
 eof_position = length(in_mem_data);
 
@@ -36,24 +33,41 @@ eof_position = length(in_mem_data);
 
 GROWTH_SIZE   = options.lead_in_growth_size;
 INIT_SIZE     = options.lead_in_init_size;
-n_segs_p1     = 1;
+n_segs        = 1; 
 next_index    = 13;
-seg_starts = zeros(1,INIT_SIZE);
-
+start_segment_I = zeros(1,INIT_SIZE);
+start_segment_I(1) = 13; %This will be corrected later
 try
     while next_index <= eof_position
         %It would be nice to get rid of the addition
         %and the if statement ...
-        n_segs_p1 = n_segs_p1 + 1;
         
-        if n_segs_p1 > length(seg_starts)
-            seg_starts = [seg_starts zeros(1,GROWTH_SIZE)]; %#ok<AGROW>
+%        
+%7*4 bytes lead in
+%7 words
+%1 - TDSm 1-4
+%2 - toc  5-8
+%3 - version number 9 - 12
+%4:5 = segment length 13-20
+%6:7 = meta length 21-28
+        
+        n_segs = n_segs + 1;
+        
+        if n_segs > length(start_segment_I)
+            start_segment_I = [start_segment_I zeros(1,GROWTH_SIZE)]; %#ok<AGROW>
+            %seg_lengths     = [seg_lengths zeros(1,GROWTH_SIZE)]; %#ok<AGROW>
         end
+
+        %next_index + 8  - gets to 21
+        %next_index + 16 - gets to start of data
+        %+16 + seg_lengths - start of next segment
+        %+12 => next segment length
         
         next_index = next_index + double(typecast(in_mem_data(next_index:next_index+7),'uint64')) + 28;
-        seg_starts(n_segs_p1) = next_index;
+        start_segment_I(n_segs) = next_index;
     end
-    n_segs = n_segs_p1 - 1;
+    %NOTE: This last values is invalid
+    n_segs = n_segs - 1;
 catch ME
     %Then we most likely got an error from improperly parsing
     %the length data and exceeding the limits of the data
@@ -63,37 +77,15 @@ catch ME
     error('Unhandled error case')
 end
 
+%obj.invalid_segment_found = invalid_segment_found;
 
-obj.invalid_segment_found = invalid_segment_found;
+start_segment_I((n_segs+1):end) = [];
+start_segment_I = start_segment_I - 12; %shift back to the
+%start of the segments
 
-%Consistent code: move to helper function ...
-%--------------------------------------------------------------------------
-lead_in_data(:,n_segs+1:end) = []; %truncate overly allocated data
-lead_in_flags = typecastC(lead_in_data(1:4,:),'uint32');
+seg_lengths = double(sl.io.staggeredU8ToU64(in_mem_data,start_segment_I+12))';
 
-I_bad = find(lead_in_flags ~= obj.first_word,1);
-if ~isempty(I_bad)
-    %TODO: options_local.read_file_until_error
-    error('Invalid lead in detected, handling not yet supported ...')
-end
-
-%We'll skip version # for now (9:12 => uint32)
-
-seg_lengths   = double(typecastC(lead_in_data(13:20,:),'uint64'))';
-meta_lengths  = double(typecastC(lead_in_data(21:28,:),'uint64'))';
-%--------------------------------------------------------------------------
-
-
-meta_starts = 28 + [1 cumsum(seg_lengths(1:end-1) + 28)];
-
-raw_meta_data = cell(1,n_segs);
-for iSeg = 1:n_segs
-    raw_meta_data{iSeg} = in_mem_data(meta_starts(iSeg):meta_starts(iSeg) - 1 + meta_lengths(iSeg));
-end
-
-obj.toc_masks     = typecastC(lead_in_data(5:8,:),'uint32');
-obj.n_segs        = n_segs;
-obj.raw_meta_data = raw_meta_data;
+h__populateOutput(obj,start_segment_I,in_mem_data,seg_lengths)
 
 end
 
@@ -104,7 +96,7 @@ function h__useStrfindApproach(obj,options,in_mem_data) %#ok<INUSL>
 %   Inputs:
 %   -------
 %
-start_segment_I = strfind(in_mem_data,uint8('TDSm'));
+start_segment_I = strfind(in_mem_data,typecast(obj.first_word,'uint8'));
 
 try
     seg_lengths = double(sl.io.staggeredU8ToU64(in_mem_data,start_segment_I+12))';
@@ -120,12 +112,24 @@ end
 %Error Handling
 %--------------------------------------------------------------------------
 %NOTE: If anything causes a problem we'll need to do some truncation ...
-if start_segment_I(1) ~= 1 || ~isequal(start_segment_I(1:end-1) + 28 + seg_lengths(1:end-1),start_segment_I(2:end))
-    %TODO: Handle this ...
-    %This code indicates that 'I' has matched extra instances
-    %and that some of the I's are not valid and we need to filter them out
-    error('JAH TODO: Write this code')
+
+%This check does not work when reading from an index file ...
+if obj.reading_index_file
+    %Can't do an error check here, need to know the meta lengths ...
+else
+    if start_segment_I(1) ~= 1 || ~isequal(start_segment_I(1:end-1) + 28 + seg_lengths(1:end-1),start_segment_I(2:end))
+        %TODO: Handle this ...
+        %This code indicates that 'I' has matched extra instances
+        %and that some of the I's are not valid and we need to filter them out
+        error('JAH TODO: Write this code')
+    end
 end
+
+h__populateOutput(obj,start_segment_I,in_mem_data,seg_lengths)
+
+end
+
+function h__populateOutput(obj,start_segment_I,in_mem_data,seg_lengths)
 
 lead_in = double(sl.io.staggeredU8ToU32(in_mem_data,start_segment_I))';
 

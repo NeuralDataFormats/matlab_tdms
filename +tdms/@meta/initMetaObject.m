@@ -64,8 +64,6 @@ n_segments = obj.raw_meta.n_segments;
 temp__read_order       = zeros(1,20); %Values represent final object ids
 temp__read_order_count = 0;
 
-raw_id_to_final_id_map = obj.final_id_info.raw_id_to_final_id_map;
-
 temp_final_segment_info_ca = cell(1,n_segments);
 
 full_to_unique_seg_map = obj.raw_meta.full_to_unique_map;
@@ -85,35 +83,17 @@ for iSeg = 1:n_segments
         temp__read_order_count = 0;
     end
     
-    cur_seg_info = corrected_segment_info(full_to_unique_seg_map(iSeg));
+    cur_seg_info  = corrected_segment_info(full_to_unique_seg_map(iSeg));
     
+    seg_final_ids = cur_seg_info.final_obj_ids;
+    idx_lens      = cur_seg_info.idx_len;
     
-    %TODO: Need to handle the Lazerus case:
-    %- len = intmax('uint32') but in read order
-    
-    %get final ids of this segment
-    
-    keyboard
-    
-    seg_final_ids = raw_id_to_final_id_map(cur_seg_info.obj_id);
-    
-    seg_idx_data   = cur_seg_info.obj_idx_data;
-    
-    %TODO: Precompute these on the unique set
-    seg_n_values   = double(tdms.sl.io.typecastC(seg_idx_data(3:4,:),'uint64'));
-    
-    %TODO: Correct this on the unique set
-    seg_size_bytes = double(tdms.sl.io.typecastC(seg_idx_data(5:6,:),'uint64'));
-    
-    idx_lens = cur_seg_info.obj_idx_len;
-    
+    %TODO: handle adding final_obj__in_read_list
     for iID = 1:length(seg_final_ids)
         cur_final_id = seg_final_ids(iID);
         cur_idx_len  = idx_lens(iID);
         if cur_idx_len == 0
-            %same as before, runs checks
-
-            %NOTE: # of values
+            %same as before
             if ~final_obj__reading_channel(cur_final_id)
                 final_obj__reading_channel(cur_final_id) = true;
                 temp__read_order_count = temp__read_order_count + 1;
@@ -121,36 +101,40 @@ for iSeg = 1:n_segments
             end
         elseif cur_idx_len == UINT32_MAX
             %no raw data in this segment
-            %
-            %Is this temporary, does it come back in the next segment
-            %automatically?????
             
             if final_obj__reading_channel(cur_final_id)
-               dirty_read_list = true; 
+                %Is this temporary, does it come back in the next segment
+                %automatically?????
+               dirty_read_list = true;
+               final_obj__reading_channel(cur_final_id) = false;
             end
-            
-            final_obj__reading_channel(cur_final_id) = false;
         else
-            final_obj__n_values_per_read(cur_final_id) = seg_n_values(iID);
+            %Normally this section will not run (at least for tdms v2)
+            final_obj__n_values_per_read(cur_final_id) = cur_seg_info.n_values_read(iID);
+            final_obj__n_bytes_per_read(cur_final_id)  = cur_seg_info.n_bytes_read(iID);
             
             if ~final_obj__reading_channel(cur_final_id)
                 final_obj__reading_channel(cur_final_id) = true;
+                final_obj__in_read_list(cur_final_id) = true;
                 temp__read_order_count = temp__read_order_count + 1;
                 temp__read_order(temp__read_order_count) = cur_final_id;
             end            
         end
     end
     
-    %raw_data_types = cur_seg_info
-    
     seg_read_order        = temp__read_order(1:temp__read_order_count);
-    seg_n_values_per_read = final_obj__n_bytes_per_read(seg_read_order);
+    seg_n_values_per_read = final_obj__n_values_per_read(seg_read_order);
     seg_n_bytes_per_read  = final_obj__n_bytes_per_read(seg_read_order);
     if dirty_read_list
         error('Unhandled case, need to check on conversations with NI')
        keyboard %TODO: Set things to zero 
     end
     
+    %TODO: This is incorrect.
+    %n_bytes_per_read is really n_bytes_per_value
+    %Need to make this change ...
+    %Determine how strings are handled, then make sure everything
+    %follows that
     n_chunks = lead_in__data_lengths(iSeg)/sum(seg_n_bytes_per_read);
     
     if n_chunks ~= floor(n_chunks)

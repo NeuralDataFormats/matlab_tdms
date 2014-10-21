@@ -32,30 +32,25 @@ classdef meta < tdms.sl.obj.handle_light
     end
     
     properties
+        d1 = '-----  File Stuffs  ------'
         fid
         file_open = false
         filepath_input
-        is_index_only   %Indicates that only an index file was passed in
-        %for the file_path.
-        reading_index_file %Indicates that we are parsing an index file,
-        %not a data file.
-        
-        %TODO: Let's move this to a processor summary class
-        index_vs_data_reason %Property that briefly describes in text reason
-        %for reading meta data from index file or full data file
     end
     
     properties
+        d2 = '---- Result Objects -----'
         p_summary    %tdms.meta.processing_summary
-        lead_in      %Class tdms.lead_in
-        raw_meta     %Class tdms.meta.raw
-        final_id_info    %Class tdms.meta.final_id_info
+        lead_in      %tdms.lead_in
+        raw_meta     %tdms.meta.raw
+        final_id_info    %tdms.meta.final_id_info
         corrected_seg_info %tdms.meta.corrected_segment_info
         final_segment_info
-        fixed_meta   %Class tdms.meta.fixed
-        read_info    %Class tdms.data.read_info
         
-        props        %Class tdms.props
+        %fixed_meta   %Class tdms.meta.fixed
+        %read_info    %Class tdms.data.read_info
+        
+        %props        %Class tdms.props
     end
     
     properties (Constant,Hidden)
@@ -101,7 +96,7 @@ classdef meta < tdms.sl.obj.handle_light
             obj.filepath_input = file_path;
             
             %tdms.meta.open_file
-            obj.open_file(file_path);
+            reading_index_file = obj.open_file(file_path);
             
             %Step 1:
             %---------------------------------------------------------------
@@ -111,7 +106,7 @@ classdef meta < tdms.sl.obj.handle_light
                 obj.p_summary,...
                 obj.options,...
                 obj.fid,...
-                obj.reading_index_file);
+                reading_index_file);
             
             %tdms.meta.initMetaObject
             obj.initMetaObject();

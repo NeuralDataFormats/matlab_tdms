@@ -7,6 +7,7 @@ classdef processing_summary < handle
     
     properties
        %tdms.meta.open_file 
+       input_file_path_index_only
        used_index_file
        used_index_file_reason
        lead_in_processing_approach

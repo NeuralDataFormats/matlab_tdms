@@ -1,4 +1,4 @@
-function open_file(obj,filepath)
+function reading_index_file = open_file(obj,filepath)
 %open_file  Opens tdms or index file for reading meta data
 %
 %   tdms.meta.open_file(obj,filepath)
@@ -9,7 +9,12 @@ options_local = obj.options;
 
 if ~(strcmp(fileExt,'tdms') || strcmp(fileExt,'tdms_index'))
 
-obj.is_index_only = strcmp(fileExt,obj.TDMS_INDEX_FILE_EXTENSION);
+    
+p_summary = obj.p_summary;    
+    
+is_index_only = strcmp(fileExt,obj.TDMS_INDEX_FILE_EXTENSION); 
+
+p_summary.input_file_path_index_only = is_index_only;
 
 %TODO: Check for an improper file input - not tdms or tdms_index
 
@@ -24,8 +29,8 @@ obj.is_index_only = strcmp(fileExt,obj.TDMS_INDEX_FILE_EXTENSION);
 %1) only the index file was passed in
 %------------------------------------------------------------------
 
-p_summary = obj.p_summary;
-if obj.is_index_only
+
+if is_index_only
     p_summary.used_index_file = true;
     p_summary.used_index_file_reason = 'Specified filepath is index, not data file';
 elseif options_local.meta__USE_INDEX
@@ -44,6 +49,8 @@ else
     p_summary.used_index_file = false;
     p_summary.used_index_file_reason = 'Option ''meta_USE_INDEX'' is false';
 end
+
+reading_index_file = p_summary.used_index_file;
 
 %Check for file existence and open
 %---------------------------------------------------------------

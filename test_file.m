@@ -1,9 +1,17 @@
-BASE_PATH = 'F:\Projects\matlab\tdms';
+BASE_PATH = 'F:\Projects\matlab\tdms\data_examples';
 
-
+%This file is very highly segmented
 file_path = fullfile(BASE_PATH,'data_2013_07_19_4.tdms');
+
+%
 file_path = fullfile(BASE_PATH,'test1(reshaped).tdms');
 
+%Example from Labview 2014
+file_path = fullfile(BASE_PATH,'Example TDMS Advanced Synchronous Write.tdms');
+
+file_path = fullfile(BASE_PATH,'Example TDMS Advanced Asynchronous Write.tdms');
+
+file_path = fullfile(BASE_PATH,'Java--Block-005-- States');
 
 %file_path = 'Z:\RAWDATA\2010\02182010 - Quadzilla\kinematicsPS\006_Block-021.tdms';
 %file_path = 'C:\Users\RNEL\Desktop\TDMSproblems\Demo3.tdms_index';
