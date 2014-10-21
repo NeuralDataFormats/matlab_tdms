@@ -11,6 +11,7 @@ file_path = fullfile(BASE_PATH,'Example TDMS Advanced Synchronous Write.tdms');
 
 file_path = fullfile(BASE_PATH,'Example TDMS Advanced Asynchronous Write.tdms');
 
+%Has interleaved data
 file_path = fullfile(BASE_PATH,'Java--Block-005-- States');
 
 %file_path = 'Z:\RAWDATA\2010\02182010 - Quadzilla\kinematicsPS\006_Block-021.tdms';

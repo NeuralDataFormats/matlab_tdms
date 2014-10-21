@@ -51,8 +51,15 @@ final_obj__in_read_list          = false(1,n_unique_objs); %true if the
 
 %These both are "current" values that will potentially change as the
 %segments progress.
-final_obj__n_values_per_read     = zeros(1,n_unique_objs);
-final_obj__n_bytes_per_read      = zeros(1,n_unique_objs);
+final_obj__n_values_per_read = zeros(1,n_unique_objs);
+final_obj__n_bytes_per_read  = zeros(1,n_unique_objs);
+final_obj__n_bytes_per_value = obj.final_id_info.default_byte_size;
+
+
+
+%mask = fixed_n_bytes_per_read == 0;
+%fixed_n_bytes_per_read(mask) = final_id_info.default_byte_size(raw_to_final_id_map(mask));
+
 
 lead_in__data_starts    = obj.lead_in.data_starts;
 lead_in__data_lengths   = obj.lead_in.data_lengths;
@@ -110,8 +117,19 @@ for iSeg = 1:n_segments
             end
         else
             %Normally this section will not run (at least for tdms v2)
-            final_obj__n_values_per_read(cur_final_id) = cur_seg_info.n_values_read(iID);
-            final_obj__n_bytes_per_read(cur_final_id)  = cur_seg_info.n_bytes_read(iID);
+            
+            cur_n_values_per_read = cur_seg_info.n_values_per_read(iID);
+            
+            final_obj__n_values_per_read(cur_final_id) = cur_n_values_per_read;
+            final_obj__n_bytes_per_read(cur_final_id)  = cur_seg_info.n_bytes_per_read(iID);
+            
+            if cur_n_values_per_read == 0
+                %Technically we should check the data type as this is only
+                %for strings
+                final_obj__n_bytes_per_read(cur_final_id)  = cur_seg_info.n_bytes_read(iID);
+            else
+                final_obj__n_bytes_per_read(cur_final_id) = cur_n_values_per_read*final_obj__n_bytes_per_value(cur_final_id); 
+            end
             
             if ~final_obj__reading_channel(cur_final_id)
                 final_obj__reading_channel(cur_final_id) = true;
@@ -120,6 +138,11 @@ for iSeg = 1:n_segments
                 temp__read_order(temp__read_order_count) = cur_final_id;
             end            
         end
+    end
+    
+    if temp__read_order_count == 0
+        %Do we want to create a final segment info????
+       continue 
     end
     
     seg_read_order        = temp__read_order(1:temp__read_order_count);
@@ -194,15 +217,10 @@ temp_ca = cell(1,n_unique_segments);
 temp_n_read_values = [unique_segment_info.unprocessed_n_read_values];
 temp_n_size_bytes  = [unique_segment_info.unprocessed_n_read_bytes];
 
-fixed_n_read_values = tdms.sl.io.typecastC(temp_n_read_values,'uint64');
-fixed_n_size_bytes  = tdms.sl.io.typecastC(temp_n_size_bytes,'uint64');
-
+fixed_n_values_per_read = tdms.sl.io.typecastC(temp_n_read_values,'uint64');
+fixed_n_bytes_per_read  = tdms.sl.io.typecastC(temp_n_size_bytes,'uint64');
 
 raw_to_final_id_map = final_id_info.raw_id_to_final_id_map;
-
-mask = fixed_n_size_bytes == 0;
-fixed_n_size_bytes(mask) = final_id_info.default_byte_size(raw_to_final_id_map(mask));
-
 
 has_raw_data = final_id_info.haw_raw_data';
 
@@ -217,15 +235,15 @@ for iSeg = 1:n_unique_segments
     raw_obj_ids = cur_raw_segment_info.obj_id;
     
     temp.final_obj_ids = raw_to_final_id_map(raw_obj_ids);
-    temp.n_bytes_read  = fixed_n_size_bytes(raw_obj_ids);
-    temp.n_values_read = fixed_n_read_values(raw_obj_ids);
+    temp.n_bytes_per_read  = fixed_n_bytes_per_read(raw_obj_ids);
+    temp.n_values_per_read = fixed_n_values_per_read(raw_obj_ids);
     temp.idx_len = cur_raw_segment_info.obj_idx_len;
     
     temp_ca{iSeg} = temp;
     
     local_has_raw_data = has_raw_data(temp.final_obj_ids);
     
-    if any(~local_has_raw_data & temp.n_values_read ~= 0)
+    if any(~local_has_raw_data & temp.n_values_per_read ~= 0)
        error('Some object with values to read doesn''t have raw data') 
     end
 end
