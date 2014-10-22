@@ -197,6 +197,7 @@ function corrected_seg_info = h__createCorrectedSegmentInfo(obj)
 %   tdms.meta.corrected_segment_info
 %   tdms.meta.raw_segment_info
 
+%TODO: We might want to move this to a static method of the class
 
 %- remove typecasting that was not done previously
 %- update n_bytes_per_read for all non-string types

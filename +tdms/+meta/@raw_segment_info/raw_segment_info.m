@@ -6,7 +6,7 @@ classdef raw_segment_info
     %   One of these is created for each unique meta data segment.
     %
     %   See Also:
-    %   tdms.meta.raw.populateObject
+    %   tdms.meta.raw.initMetaRawObject
     
     properties
        first_seg_id
