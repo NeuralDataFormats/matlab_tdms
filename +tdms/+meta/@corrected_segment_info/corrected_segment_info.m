@@ -22,7 +22,9 @@ classdef corrected_segment_info
        n_values_per_read
     end
     
-    methods
+    methods (Static)
+        %tdms.meta.corrected_segment_info.initializeObjects(meta_obj)
+        corrected_seg_info = initializeObjects(meta_obj)
     end
     
 end

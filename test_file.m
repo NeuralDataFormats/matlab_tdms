@@ -12,7 +12,10 @@ file_path = fullfile(BASE_PATH,'Example TDMS Advanced Synchronous Write.tdms');
 file_path = fullfile(BASE_PATH,'Example TDMS Advanced Asynchronous Write.tdms');
 
 %Has interleaved data
-file_path = fullfile(BASE_PATH,'Java--Block-005-- States');
+file_path = fullfile(BASE_PATH,'Java--Block-005-- States.tdms');
+
+%Has lots of variety
+file_path = fullfile(BASE_PATH,'132_Block-093.tdms');
 
 %file_path = 'Z:\RAWDATA\2010\02182010 - Quadzilla\kinematicsPS\006_Block-021.tdms';
 %file_path = 'C:\Users\RNEL\Desktop\TDMSproblems\Demo3.tdms_index';
@@ -46,11 +49,11 @@ tic
 temp = tdms.meta(file_path);
 toc
 
-%tic
-%temp2 = TDMS_getStruct(file_path);
-% % profile off
-% % profile viewer
-%toc
+tic
+temp2 = TDMS_getStruct(file_path);
+% profile off
+% profile viewer
+toc
 
 % profile off
 % profile viewer

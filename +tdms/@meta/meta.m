@@ -50,7 +50,7 @@ classdef meta < tdms.sl.obj.handle_light
         %fixed_meta   %Class tdms.meta.fixed
         %read_info    %Class tdms.data.read_info
         
-        %props        %Class tdms.props
+        props        %Class tdms.props
     end
     
     properties (Constant,Hidden)

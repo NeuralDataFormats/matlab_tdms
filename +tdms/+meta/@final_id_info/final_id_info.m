@@ -11,12 +11,9 @@ classdef final_id_info < handle
     end
     
     properties
-        
-        
         raw_id_to_final_id_map
         %give a raw id (as index)
         %get a final id (as value)
-        
     end
     
     properties

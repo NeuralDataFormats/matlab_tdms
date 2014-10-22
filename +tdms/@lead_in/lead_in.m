@@ -5,7 +5,6 @@ classdef lead_in < sl.obj.handle_light
     %
     %   Methods:
     %   --------
-    %   tdms.lead_in.readLeadInFromIndexFile
     %   tdms.lead_in.readLeadInFromDataFile
     %   tdms.lead_in.readLeadInFromInMemData
     %

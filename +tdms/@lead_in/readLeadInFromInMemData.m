@@ -6,10 +6,6 @@ function in_mem_data = readLeadInFromInMemData(obj,options,fid,is_index_file)
 %   See Also:
 %   tdms.lead_in.readLeadInFromDataFile
 %   tdms.lead_in.readLeadInFromInMemData
-%
-%   IMPROVEMENT NOTES
-%   =======================================================================
-%   1) We could add a check for data consistency
 
 %Yikes, we don't want to read the data here if we don't need to
 %Pass this decision up ...
