@@ -1,6 +1,7 @@
 classdef tdms_object < handle
-    %UNTITLED2 Summary of this class goes here
-    %   Detailed explanation goes here
+    %
+    %   Class:
+    %   tdms.tmds_object
     
     properties
        name

@@ -1,6 +1,7 @@
 classdef raw < tdms.sl.obj.handle_light
     %
-    %   Class: tdms.meta.raw
+    %   Class: 
+    %   tdms.meta.raw
     %
     %     A raw object occurs every time that an object is specified in a
     %     segment of the meta data. To save time and to actually help

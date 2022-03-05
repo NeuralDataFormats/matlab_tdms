@@ -4,16 +4,17 @@ classdef final_id_info < handle
     %   tdms.meta.final_id_info
     %
     %   Created by:
-    %       tdms.meta.readMeta
+    %   tdms.meta.readMeta
     
     properties
         parent %Class: tdms.meta
     end
     
     properties
-        raw_id_to_final_id_map
         %give a raw id (as index)
         %get a final id (as value)
+        raw_id_to_final_id_map
+        
     end
     
     properties

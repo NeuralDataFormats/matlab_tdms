@@ -33,6 +33,7 @@ fread_prop_info = tdms.props.get_prop_fread_functions;
 %------------------------
 %Each cell contains the raw meta information (uint8) for one segement.
 raw_meta_data_cells = obj.lead_in.raw_meta_data;
+%
 
 %We convert to char because unique doesn't work on cell arrays of uint8s :/
 as_char = cellfun(@char,raw_meta_data_cells,'un',0);
@@ -88,7 +89,7 @@ for i_seg = 1:n_unique_segments
         
         %INDEX LENGTH HANDLING --------------------------------------------
         index_length = cur_u32_data(next_u8_index);
-        next_u8_index    = next_u8_index + 4;
+        next_u8_index = next_u8_index + 4;
         obj_idx_len(iObject) = index_length;
         
         %NOTE: Ordered by likelihood
