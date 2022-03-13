@@ -1,17 +1,25 @@
 classdef lead_in
     %
+    %   Class:
+    %   tdms.lead_in
     
     properties
-        hasMetaData
+        has_meta_data
         kTocNewObjList
-        hasRawData
-        isInterleaved
-        isBigEndian
-        hasRawDaqMX
+        has_raw_data
+        is_interleaved
+        is_big_endian
+        has_raw_daq_mx
+        
+        ver_number
+        segment_length
+        meta_length
+        
+        eof_error
     end
     
     methods
-        function obj = lead_in(fid,lastLetter)
+        function obj = lead_in(fid,last_letter)
             
             %1) TDSm - (indicates lead in)
             %-----------------------------
@@ -23,44 +31,44 @@ classdef lead_in
             %file or the main data file
             mtag = fread(fid,1,'uint8');
             
-            if ~(Ttag == 84 && Dtag == 68 && Stag == 83 && mtag == lastLetter)
+            if ~(Ttag == 84 && Dtag == 68 && Stag == 83 && mtag == last_letter)
                 %TODO: show values observed
                 error('Unexpected lead in header')
             else
                 %2) Kind of Data
-                tocMask = fread(fid,1,'uint32');
+                toc_mask = fread(fid,1,'uint32');
                 
-                    obj.hasMetaData = bitget(tocMask,2);
-                    obj.kTocNewObjList = bitget(tocMask,3);
-                    obj.hasRawData = bitget(tocMask,4);
-                    obj.isInterleaved = bitget(tocMask,6); %false, contiguous
-                    obj.isBigEndian = bitget(tocMask,7); %false, little-endian
-                    obj.hasRawDaqMX = bitget(tocMask,8));
+                obj.has_meta_data = bitget(toc_mask,2);
+                obj.kTocNewObjList = bitget(toc_mask,3);
+                obj.has_raw_data = bitget(toc_mask,4);
+                obj.is_interleaved = bitget(toc_mask,6); %false, contiguous
+                obj.is_big_endian = bitget(toc_mask,7); %false, little-endian
+                obj.has_raw_daq_mx = bitget(toc_mask,8);
                 
-                if flags.isBigEndian
+                if obj.is_big_endian
                     error('Currently code is unable to handle Big-Endian format')
                 end
                 
-                if flags.hasRawDaqMX
+                if obj.has_raw_daq_mx
                     error('Currently code is unable to ignore/handle Raw Daq MX data')
                 end
                 
                 %3) Version Number
-                info = struct(...
-                    'verNumber',  fread(fid,1,'uint32'),...  %This is not very well defined
-                    'segLength',  fread(fid,1,'uint64'),...
-                    'metaLength', fread(fid,1,'uint64'));
+                
+                obj.ver_number = fread(fid,1,'uint32');
+                obj.segment_length = fread(fid,1,'uint64');
+                obj.meta_length = fread(fid,1,'uint64');
                 
                 %NOT THROWING THIS ERROR RIGHT NOW
                 %======================================================================
                 %This should really quit instead of throwing an error
-                eof_error = info.segLength == 2^64-1;
+                obj.eof_error = obj.segment_length == 2^64-1;
                 %         if info.segLength == 2^64-1
                 %             error('File got corrupted when saving')
                 %         end
                 
                 %This most likely suggests an error in the reading
-                if ~eof_error && flags.hasMetaData ~= (info.metaLength ~= 0)
+                if ~obj.eof_error && obj.has_meta_data ~= (obj.meta_length ~= 0)
                     error('Flags suggest presence of meta data but no meta is present according to length value')
                 end
                 
@@ -69,3 +77,4 @@ classdef lead_in
         end
     end
     
+end
